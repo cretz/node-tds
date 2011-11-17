@@ -39,5 +39,11 @@ class BufferStream
     ret = @_buffer.get offset
     offset++
     ret
+    
+  readInt: ->
+    @_assertBytesAvailable 4
+    ret = @_buffer.readInt32BE offset
+    offset += 4
+    ret
 
 class StreamIndexOutOfBoundsError extends Error

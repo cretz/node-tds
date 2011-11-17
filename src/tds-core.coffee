@@ -11,46 +11,48 @@ class TdsCore extends EventEmitter
     0x10: 
       name: 'LOGIN7'
       type: 0x10
+      send: true
       rules: [
-        { length: 'DWORD' }
-        { tdsVersion: 'DWORD' }
-        { packetSize: 'DWORD' }
-        { clientProgVer: 'DWORD' }
-        { clientPid: 'DWORD' }
-        { connectionId: 'DWORD' }
-        { optionFlags1: '4BIT' }
-        { optionFlags2: '4BIT' }
-        { typeFlags: '4BIT' }
-        { optionFlags3: '4BIT' }
-        { timeZone: 'LONG' }
-        { clientLcid: 'LONG' }
-        { hostName: 'string with offset' }
-        { userName: 'string with offset' }
-        { password: 'string with offset' }
-        { appName: 'string with offset' }
-        { serverName: 'string with offset' }
-        { unused: 'string with offset' }
-        { progName: 'string with offset' }
-        { language: 'string with offset' }
-        { database: 'string with offset' }
-        { clientId: '6BYTE' }
-        { sspi: 'string with offset' }
-        { attachDbFile: 'string with offset' }
-        { changePassword: 'string with offset' }
-        { sspiLong: 'DWORD' }
+        { 'length', 'DWORD' }
+        { 'tdsVersion', 'DWORD' }
+        { 'packetSize', 'DWORD' }
+        { 'clientProgVer', 'DWORD' }
+        { 'clientPid', 'DWORD' }
+        { 'connectionId', 'DWORD' }
+        { 'optionFlags1', '4BIT' }
+        { 'optionFlags2', '4BIT' }
+        { 'typeFlags', '4BIT' }
+        { 'optionFlags3', '4BIT' }
+        { 'timeZone', 'LONG' }
+        { 'clientLcid', 'LONG' }
+        { 'hostName', 'string with offset' }
+        { 'userName', 'string with offset' }
+        { 'password', 'string with offset' }
+        { 'appName', 'string with offset' }
+        { 'serverName', 'string with offset' }
+        { 'unused', 'string with offset' }
+        { 'progName', 'string with offset' }
+        { 'language', 'string with offset' }
+        { 'database', 'string with offset' }
+        { 'clientId', '6BYTE' }
+        { 'sspi', 'string with offset' }
+        { 'attachDbFile', 'string with offset' }
+        { 'changePassword', 'string with offset' }
+        { 'sspiLong', 'DWORD' }
       ]
     0xAD:
       name: 'LOGINACK'
       type: 0xAD
+      receive: true
       rules: [
-        { length: 'USHORT' }
-        { interface: 'BYTE' }
-        { tdsVersion: 'DWORD' }
-        { progName: 'B_VARCHAR' }
-        { majorVer: 'BYTE' }
-        { minorVer: 'BYTE' }
-        { buildNumHi: 'BYTE' }
-        { buildNumLow: 'BYTE' }
+        { 'length', 'USHORT' }
+        { 'interface', 'BYTE' }
+        { 'tdsVersion', 'DWORD' }
+        { 'progName', 'B_VARCHAR' }
+        { 'majorVer', 'BYTE' }
+        { 'minorVer', 'BYTE' }
+        { 'buildNumHi', 'BYTE' }
+        { 'buildNumLow', 'BYTE' }
       ]
   
   ###*
@@ -143,9 +145,25 @@ class TdsCore extends EventEmitter
     # grab type
     tokenType = @tokens[@_bufferStream.readByte()]
     if not tokenType? then throw new Error 'Unrecognized type token type'
-    # build result out of it
-    # TODO
-    
+    #parse type
+    token = @_parseTokentokenType
+  
+  _parseToken: (tokenType) ->
+    ret = {}
+    for rule in tokenType.rules
+      val = null
+      switch rule[1]
+        # please keep in alphabetical order
+        when 'DWORD' then val = @_bufferStream.readInt()
+        #TODO
+        
+  _writeToken: (tokenType, token) ->
+    bldr = new BufferBuilder
+    for rule in tokenType.rules
+      switch rule[1]
+        when 'DWORD' then bldr.appendInt token[rule[0]]
+        #TODO
+  
   _onToken: (token) ->
     
     
