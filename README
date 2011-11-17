@@ -1,0 +1,3 @@
+This is my playground to see how difficult writing a async friendly 
+node.js driver for SQL Server would be. Please don't use this project
+right now!

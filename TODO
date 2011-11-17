@@ -1,0 +1,3 @@
+Things that will not be in initial version:
+
+* NTLM SSO auth with current user using C++ add on inspired by ntlmauth.dll from jTDS
