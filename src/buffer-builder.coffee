@@ -32,6 +32,9 @@ class BufferBuilder
   appendUcs2String: (string) ->
     @appendString string, 'ucs2'
     
+  appendAsciiString: (string) ->
+    @appendString string, 'ascii'
+    
   appendUInt16LE: (int) ->
     @length += 2
     @_values.push type: 'uint16LE', value: int

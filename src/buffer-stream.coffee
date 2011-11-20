@@ -30,7 +30,7 @@ class BufferStream
     @_offset = @_offsetStart
     @_offsetStart = null
     
-  _assertBytesAvailable: (amountNeeded) ->
+  assertBytesAvailable: (amountNeeded) ->
     if amountNeeded + @_offset >= @_buffer.length
       throw new StreamIndexOutOfBoundsError
       
@@ -49,13 +49,13 @@ class BufferStream
   # please keep read methods in alphabetical order
       
   readByte: ->
-    @_assertBytesAvailable 1
+    @assertBytesAvailable 1
     ret = @_buffer.get @_offset
     @_offset++
     ret
     
   readBytes: (length) ->
-    @_assertBytesAvailable length
+    @assertBytesAvailable length
     ret = []
     for i in [0..length - 1]
       ret.push @_buffer.get @_offset
@@ -63,13 +63,13 @@ class BufferStream
     ret
     
   readInt32LE: ->
-    @_assertBytesAvailable 4
+    @assertBytesAvailable 4
     ret = @_buffer.readInt32LE @_offset
     @_offset += 4
     ret
     
   readString: (lengthInBytes, encoding) ->
-    @_assertBytesAvailable lengthInBytes
+    @assertBytesAvailable lengthInBytes
     ret = @_buffer.toString encoding, @_offset, @_offset + lengthInBytes
     @_offset += lengthInBytes
     ret
@@ -85,17 +85,29 @@ class BufferStream
   readUcs2String: (length) ->
     @readString length * 2, 'ucs2'
     
+  readAsciiString: (length) ->
+    @readString length, 'ascii'
+    
   ###*
   * Does not move the offset
   ###
   readUcs2StringFromIndex: (index, length) ->
     @readStringFromIndex index, length * 2, 'ucs2'
   
+  readUInt16LE: ->
+    @assertBytesAvailable 2
+    ret = @_buffer.readUInt16LE offset
+    offset += 2
+    ret
+    
   readUInt32LE: ->
-    @_assertBytesAvailable 4
+    @assertBytesAvailable 4
     ret = @_buffer.readUInt32LE offset
     offset += 4
     ret
     
+  skip: (length) ->
+    @assertBytesAvailable length
+    offset += length
 
 class StreamIndexOutOfBoundsError extends Error
