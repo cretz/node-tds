@@ -1,4 +1,4 @@
-class TdsConstants
+class exports.TdsConstants
   
   ###*
   * Versions indexed by the TDS protocol version

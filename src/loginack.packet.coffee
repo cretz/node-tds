@@ -1,4 +1,6 @@
-class LoginAckPacket extends Packet
+{Packet} = require './packet'
+
+class exports.LoginAckPacket extends Packet
   
   @type: 0xAD
   

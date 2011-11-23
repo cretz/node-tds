@@ -1,4 +1,6 @@
-class DonePacket extends Packet
+{Packet} = require './packet'
+
+class exports.DonePacket extends Packet
   
   @type: 0xFD
   

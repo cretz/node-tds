@@ -1,4 +1,6 @@
-class RpcRequestPacket extends Packet
+{Packet} = require './packet'
+
+class exports.RpcRequestPacket extends Packet
   
   @type: 0x03
   

@@ -1,4 +1,6 @@
-class MessagePacket extends Packet
+{Packet} = require './packet'
+
+class exports.MessagePacket extends Packet
   
   number: null
   

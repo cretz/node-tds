@@ -1,4 +1,7 @@
-class Login7Packet extends Packet
+{Packet} = require './packet'
+{TdsConstants} = require './tds-constants'
+
+class exports.Login7Packet extends Packet
   
   @type: 0x10
   
@@ -6,9 +9,9 @@ class Login7Packet extends Packet
   
   ###*
   * The version of TDS to use.
-  * Default is 0x71000001
+  * Default is TdsConstants.versionsByVersion['7.1.1']
   ###
-  tdsVersion: 0x71000001
+  tdsVersion: TdsConstants.versionsByVersion['7.1.1']
   
   ###*
   * How big the packets should be.

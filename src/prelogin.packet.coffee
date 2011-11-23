@@ -1,4 +1,6 @@
-class PreLoginPacket extends Packet
+{Packet} = require './packet'
+
+class exports.PreLoginPacket extends Packet
   
   @type: 0x12
   

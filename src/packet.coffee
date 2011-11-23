@@ -1,4 +1,4 @@
-class Packet
+exports = class Packet
   
   @retrieveHeader: (stream) ->
     ret =

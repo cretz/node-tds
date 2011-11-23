@@ -1,4 +1,6 @@
-class ErrorMessagePacket extends MessagePacket
+{MessagePacket} = require './message.packet'
+
+class exports.ErrorMessagePacket extends MessagePacket
   
   @type: 0xAA
   

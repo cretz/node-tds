@@ -1,4 +1,4 @@
-class BufferBuilder
+class exports.BufferBuilder
   
   @getUcs2StringLength: (string) -> string.length * 2
   
@@ -79,4 +79,3 @@ class BufferBuilder
           offset += 4
         else
           throw new Error 'Unrecognized type: ' + value.type
-

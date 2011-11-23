@@ -1,4 +1,6 @@
-class RowPacket extends Packet
+{Packet} = require './packet'
+
+class exports.RowPacket extends Packet
   
   @type: 0xD1
   

@@ -1,4 +1,7 @@
-class ColMetaDataPacket extends Packet
+{Packet} = require './packet'
+{TdsConstants} = require './tds-constants'
+
+class exports.ColMetaDataPacket extends Packet
   
   @type: 0x81
   

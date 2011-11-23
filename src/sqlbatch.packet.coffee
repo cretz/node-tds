@@ -1,4 +1,6 @@
-class SqlBatchPacket extends Packet
+{Packet} = require './packet'
+
+class exports.SqlBatchPacket extends Packet
   
   @type: 0x01
   

@@ -1,4 +1,4 @@
-class BufferStream
+class exports.BufferStream
   
   _buffer: null
   
@@ -116,4 +116,4 @@ class BufferStream
     @assertBytesAvailable length
     offset += length
 
-class StreamIndexOutOfBoundsError extends Error
+class exports.StreamIndexOutOfBoundsError extends Error
