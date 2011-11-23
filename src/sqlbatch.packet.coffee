@@ -4,7 +4,7 @@ class SqlBatchPacket extends Packet
   
   @name: 'SQLBatch'
   
-  @sqlText: ''
+  sqlText: ''
   
   toBuffer: (builder) ->
     builder.appendUcs2String @sqlText

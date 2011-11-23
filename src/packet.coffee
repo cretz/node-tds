@@ -1,8 +1,20 @@
 class Packet
   
-  fromBuffer: -> throw new Error 'Unimplemented'
+  @retrieveHeader: (stream) ->
+    ret =
+      type: stream.readByte()
+      status: stream.readByte()
+      length: stream.readUInt16BE()
+    # assert length
+    stream.assertBytesAvailable ret.length - 4
+    ret.processId = stream.readUInt16BE()
+    ret.packetId = stream.readByte()
+    stream.skip 1
+    ret
   
-  toBuffer: -> throw new Error 'Unimplemented'
+  fromBuffer: (stream, context) -> throw new Error 'Unimplemented'
+  
+  toBuffer: (builder, context) -> throw new Error 'Unimplemented'
   
   insertPacketHeader: (builder) ->
     # packet type

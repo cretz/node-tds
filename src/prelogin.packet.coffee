@@ -1,8 +1,8 @@
 class PreLoginPacket extends Packet
   
-  type: 0x12
+  @type: 0x12
   
-  name: 'PRELOGIN'
+  @name: 'PRELOGIN'
   
   version: [0x08, 0x00, 0x01, 0x55, 0x00, 0x00]
   

@@ -1,8 +1,8 @@
 class LoginAckPacket extends Packet
   
-  type: 0xAD
+  @type: 0xAD
   
-  name: 'LOGINACK'
+  @name: 'LOGINACK'
   
   interface: 0
 

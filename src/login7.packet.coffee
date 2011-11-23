@@ -1,8 +1,8 @@
 class Login7Packet extends Packet
   
-  type: 0x10
+  @type: 0x10
   
-  name: 'LOGIN7'
+  @name: 'LOGIN7'
   
   ###*
   * The version of TDS to use.

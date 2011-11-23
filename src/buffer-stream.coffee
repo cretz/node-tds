@@ -47,6 +47,12 @@ class BufferStream
     @_offset = @_offsetStart + offset
       
   # please keep read methods in alphabetical order
+  
+  readBuffer: (length) ->
+    @assertBytesAvailable length
+    ret = @_buffer.slice @_offset, @_offset + length
+    @_offset += length
+    ret
       
   readByte: ->
     @assertBytesAvailable 1
