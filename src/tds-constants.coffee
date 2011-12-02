@@ -27,23 +27,23 @@ class exports.TdsConstants
   # init versions
   for key, value in @versionsByVersion
     @versionsByNumber[value] = key
-  
+    
   ###*
-  * Packets indexed by the type in the spec
+  * States by their number
   ###
-  @packetsByType: {}
+  @statesByNumber: [
+    'INITIAL',
+    'CONNECTING',
+    'CONNECTED',
+    'LOGGING IN',
+    'LOGGED IN'
+  ]
   
-  # init the packet references
-  @packetsByType[ColMetaDataPacket.type] = ColMetaDataPacket
-  @packetsByType[DonePacket.type] = DonePacket
-  @packetsByType[ErrorMessagePacket.type] = ErrorMessagePacket
-  @packetsByType[InfoMessagePacket.type] = InfoMessagePacket
-  @packetsByType[Login7Packet.type] = Login7Packet
-  @packetsByType[LoginAckPacket.type] = LoginAckPacket
-  @packetsByType[PreLoginPacket.type] = PreLoginPacket
-  @packetsByType[RowPacket.type] = RowPacket
-  @packetsByType[SqlBatchPacket.type] = SqlBatchPacket
+  @statesByName: {}
   
+  for key, value in @statesByNumber
+    @statesByName[value] = key
+
   ###*
   * Data types, indexed by the type in the spec
   ###
@@ -280,9 +280,6 @@ class exports.TdsConstants
   @specialStoredProceduresByName = {}
   
   # init special stored procs
-  for i in [0..@specialStoredProcedures.length - 1]
+  for i in [0..@specialStoredProceduresById.length - 1]
     @specialStoredProceduresByName[@specialStoredProceduresById[i]] = i
     @specialStoredProceduresByName[@specialStoredProceduresById[i].toLowerCase()] = i
-
-
-

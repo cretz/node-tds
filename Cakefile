@@ -4,21 +4,21 @@ path = require 'path'
 
 run = (cmd, args, cb) ->
   proc = spawn cmd, args
-  proc.stderr.on 'data', (buffer) -> console.log buffer.toString()
-  proc.stdout.on 'data', (buffer) -> console.log buffer.toString()
+  proc.stderr.on 'data', (buffer) -> process.stderr.write buffer
+  proc.stdout.on 'data', (buffer) -> process.stdout.write buffer
   proc.on 'exit', (status) ->
    process.exit(1) if status != 0
    cb() if typeof cb is 'function'
     
 compile = (includeTests, cb) ->
   console.log 'Compiling'
-  args = ['-b', '-o', 'lib/', '-c', 'src/']
-  completed -> 
+  args = ['node_modules/coffee-script/bin/coffee', '-b', '-o', 'lib/', '-c', 'src/']
+  completed = -> 
     console.log 'Compiled successfully'
     cb() if typeof cb is 'function'
-  run 'coffee', args, if not includeTests then completed else ->
-    args = ['b', '-c', 'test/']
-    run 'coffee', args, completed
+  run 'node', args, if not includeTests then completed else ->
+    args = ['node_modules/coffee-script/bin/coffee', '-b', '-c', 'test/']
+    run 'node', args, completed
     
 task 'clean', 'clean lib folder', ->
   console.log 'Cleaning'
@@ -34,5 +34,5 @@ task 'compile', 'compile JS', ->
 
 task 'test', 'test node-tds', ->
   invoke 'clean'
-  compile true, ->
-    run 'expresso', ['--include', 'lib/', 'test/*']
+  compile false, ->
+    run 'node', ['node_modules/mocha/bin/mocha', '-R', 'spec'], -> 'Tests complete'

@@ -1,9 +1,9 @@
 {Socket} = require 'net'
-{EventEmitter} = require 'events'
+# {EventEmitter} = require 'events'
 
 {BufferBuilder} = require './buffer-builder'
 {BufferStream, StreamIndexOutOfBoundsError} = require './buffer-stream'
-{ColMetaDataPacket} = require './colmetadata'
+{ColMetaDataPacket} = require './colmetadata.packet'
 {DonePacket} = require './done.packet'
 {ErrorMessagePacket} = require './error.message.packet'
 {InfoMessagePacket} = require './info.message.packet'
@@ -13,17 +13,26 @@
 {PreLoginPacket} = require './prelogin.packet'
 {RowPacket} = require './row.packet'
 {SqlBatchPacket} = require './sqlbatch.packet'
+{TdsConstants} = require './tds-constants'
 
-class exports.TdsClient extends EventEmitter
+class exports.TdsClient
   
   _socket: null
   _preLoginConfig: null
   _stream: null
+  _handler: null
   
   logDebug: false
   logError: false
+  state: TdsConstants.statesByName['INITIAL']
+  
+  constructor: (@_handler) ->
+    if @_handler? then throw new Error 'Handler required'
     
   connect: (config) ->
+    if @state isnt TdsConstants.statesByName['INITIAL']
+      throw new Error 'Client must be in INITIAL state before connecting'
+    @state = TdsConstants.statesByName['CONNECTING']
     if @logDebug then console.log 'Connecting to SQL Server with config %j', config
     try
       @_preLoginConfig = config
@@ -37,10 +46,15 @@ class exports.TdsClient extends EventEmitter
       # attempt connect
       @_socket.connect config.port ? 1433, config.host ? 'localhost'
     catch err
-      if @logError then console.error 'Error connecting: ', err 
-      @emit 'error', err
+      if @logError then console.error 'Error connecting: ', err
+      @state = TdsConstants.statesByName['INITIAL']
+      @_handler.error? err
+      end()
     
   login: (config) ->
+    if @state isnt TdsConstants.statesByName['CONNECTED']
+      throw new Error 'Client must be in CONNECTED state before logging in'
+    @state = TdsConstants.statesByName['LOGGING IN']
     if @logDebug then console.log 'Logging in with config %j', config 
     try
       # create packet
@@ -51,10 +65,13 @@ class exports.TdsClient extends EventEmitter
       # send
       @_sendPacket login
     catch err
-      if @logError then console.error 'Error on login: ', err 
-      @emit 'error', err
+      if @logError then console.error 'Error on login: ', err
+      @state = TdsConstants.statesByName['CONNECTED']
+      @_handler.error? err
     
   sqlBatch: (sqlText) ->
+    if @state isnt TdsConstants.statesByName['LOGGED IN']
+      throw new Error 'Client must be in LOGGED IN state before executing sql'
     if @logDebug then console.log 'Executing SQL Batch: %s', sqlText
     try
       # create packet
@@ -63,8 +80,8 @@ class exports.TdsClient extends EventEmitter
       # send
       @_sendPacket sqlBatch
     catch err
-      if @logError then console.error 'Error executing: ', err 
-      @emit 'error', err
+      if @logError then console.error 'Error executing: ', err
+      @_handler.error? err
       
   _socketConnect: ->
     if @logDebug then console.log 'Connection established, pre-login commencing'
@@ -78,12 +95,28 @@ class exports.TdsClient extends EventEmitter
           prelogin[key] = value
       @_sendPacket prelogin
     catch err
-      if @logError then console.error 'Error on pre-login: ', err 
-      @emit 'error', err    
+      if @logError then console.error 'Error on pre-login: ', err
+      @state = TdsConstants.statesByName['INITIAL']
+      @_handler.error? err
+      @end()
     
   _socketError: (error) ->
     if @logError then console.error 'Error in socket: ', error
-    @emit 'error', error
+    @_handler.error? err
+    @end()
+    
+  _getPacketFromType: (type) ->
+    switch type
+      when ColMetaDataPacket.type then ColMetaDataPacket
+      when DonePacket.type then DonePacket
+      when ErrorMessagePacket.type then ErrorMessagePacket
+      when InfoMessagePacket.type then InfoMessagePacket
+      when Login7Packet.type then Login7Packet
+      when LoginAckPacket.type then LoginAckPacket
+      when PreLoginPacket.type then PreLoginPacket
+      when RowPacket.type then RowPacket
+      when SqlBatchPacket.type then SqlBatchPacket
+      else throw new Error 'Unrecognized type: ' + header.type 
     
   _socketData: (data) ->
     if @logDebug then console.log 'Received %d bytes', data.length
@@ -95,10 +128,8 @@ class exports.TdsClient extends EventEmitter
       @_stream.beginTransaction()
       # grab packet
       header = Packet.retrieveHeader @_stream
-      if TdsConstants.packets[header.type]?
-        throw new Error 'Unrecognized type: ' + header.type
       # instantiate
-      packet = new TdsConstants.packets[header.type]
+      packet = new @_getPacketFromType header.type
       # parse
       packet.fromBuffer @_stream, @
       # commit
@@ -110,39 +141,53 @@ class exports.TdsClient extends EventEmitter
         @_stream.rollbackTransaction()
       else
         if @logError then console.error 'Error reading stream: ', err 
-        @emit 'error', err
+        throw err
+      return
     if @logDebug then console.log 'Handling packet of type %s', packet.name
     try
       # handle packet
       switch packet.type
         when ColMetaDataPacket.type
           @.columns = packet.columns
-          @emit 'metadata', packet
+          @_handler.metadata? packet
         when DonePacket.type
-          @emit 'done', packet
+          @_handler.done? packet
         when ErrorMessagePacket.type
-          @emit 'error', packet
+          switch @state
+            when TdsConstants.statesByName['CONNECTING']
+              @state = TdsConstants.statesByName['INITIAL']
+              @end()
+            when TdsConstants.statesByName['LOGGING IN']
+              @state = TdsConstants.statesByName['CONNECTED']
+          @_handler.error? packet
         when InfoMessagePacket.type
-          @emit 'info', packet
+          @_handler.info? packet
         when LoginAckPacket.type
-          @emit 'login', packet
+          @state = TdsConstants.statesByName['LOGGED IN']
+          @_handler.login? packet
         when PreLoginPacket.type
-          @emit 'connect', packet
+          @state = TdsConstants.statesByName['CONNECTED']
+          @_handler.connect? packet
         when RowPacket.type
-          @emit 'row', packet
-        else @emit 'error', new Error 'Unrecognized type: ' + packet.type
+          @_handler.row? packet
+        else 
+          if @logError then console.error 'Unrecognized type: ' + packet.type
+          throw new Error 'Unrecognized type: ' + packet.type
     catch err
       if @logError then console.error 'Error reading stream: ', err 
-      @emit 'error', err
+      throw err
     
   _socketEnd: ->
     if @logDebug then console.log 'Socket ended remotely' 
     @_socket = null
-    @emit 'end'
+    @state = TdsConstants.statesByName['INITIAL']
     
   _sendPacket: (packet) ->
     @_socket.write packet.toBuffer(new BufferBuilder, @)
     
   end: ->
     if @logDebug then console.log 'Ending socket' 
-    @_socket.end()
+    try
+      @_socket.end()
+    @_socket = null
+    @state = TdsConstants.statesByName['INITIAL']
