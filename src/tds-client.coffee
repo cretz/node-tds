@@ -27,7 +27,7 @@ class exports.TdsClient
   state: TdsConstants.statesByName['INITIAL']
   
   constructor: (@_handler) ->
-    if @_handler? then throw new Error 'Handler required'
+    if not @_handler? then throw new Error 'Handler required'
     
   connect: (config) ->
     if @state isnt TdsConstants.statesByName['INITIAL']
@@ -37,19 +37,20 @@ class exports.TdsClient
     try
       @_preLoginConfig = config
       # create socket
-      @_socket = new Socket
+      @_socket = new Socket()
       # attach listeners
       @_socket.on 'connect', @_socketConnect
       @_socket.on 'error', @_socketError
       @_socket.on 'data', @_socketData
       @_socket.on 'end', @_socketEnd
+      @_socket.on 'close', @_socketClose
       # attempt connect
       @_socket.connect config.port ? 1433, config.host ? 'localhost'
     catch err
-      if @logError then console.error 'Error connecting: ', err
+      if @logError then console.error 'Error connecting: ' + err
       @state = TdsConstants.statesByName['INITIAL']
-      @_handler.error? err
-      end()
+      @_handler?.error? err
+      @end()
     
   login: (config) ->
     if @state isnt TdsConstants.statesByName['CONNECTED']
@@ -83,24 +84,24 @@ class exports.TdsClient
       if @logError then console.error 'Error executing: ', err
       @_handler.error? err
       
-  _socketConnect: ->
+  _socketConnect: =>
     if @logDebug then console.log 'Connection established, pre-login commencing'
     try
       # create new stream
       @_stream = new BufferStream
       # do prelogin
       prelogin = new PreLoginPacket
-      for key, value of config
+      for key, value of @_preLoginConfig
         if prelogin.hasOwnProperty key
           prelogin[key] = value
       @_sendPacket prelogin
     catch err
       if @logError then console.error 'Error on pre-login: ', err
       @state = TdsConstants.statesByName['INITIAL']
-      @_handler.error? err
+      @_handler?.error? err
       @end()
     
-  _socketError: (error) ->
+  _socketError: (error) =>
     if @logError then console.error 'Error in socket: ', error
     @_handler.error? err
     @end()
@@ -118,7 +119,7 @@ class exports.TdsClient
       when SqlBatchPacket.type then SqlBatchPacket
       else throw new Error 'Unrecognized type: ' + header.type 
     
-  _socketData: (data) ->
+  _socketData: (data) =>
     if @logDebug then console.log 'Received %d bytes', data.length
     header = null
     packet = null
@@ -177,13 +178,23 @@ class exports.TdsClient
       if @logError then console.error 'Error reading stream: ', err 
       throw err
     
-  _socketEnd: ->
+  _socketEnd: =>
     if @logDebug then console.log 'Socket ended remotely' 
+    @_socket = null
+    @state = TdsConstants.statesByName['INITIAL']
+    @_handler?.end?()
+  
+  _socketClose: =>
+    if @logDebug then console.log 'Socket closed' 
     @_socket = null
     @state = TdsConstants.statesByName['INITIAL']
     
   _sendPacket: (packet) ->
-    @_socket.write packet.toBuffer(new BufferBuilder, @)
+    if @logDebug then console.log 'Sending packet: %s', packet.name
+    builder = packet.toBuffer new BufferBuilder, @
+    buff = builder.toBuffer()
+    if @logDebug then console.log 'Packet size: %d', buff.length
+    @_socket.write buff
     
   end: ->
     if @logDebug then console.log 'Ending socket' 

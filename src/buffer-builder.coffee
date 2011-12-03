@@ -51,14 +51,14 @@ class exports.BufferBuilder
     @
   
   insertUInt16BE: (int, position) ->
-    @length++
+    @length += 2
     @_values.splice position, 0, type: 'uint16BE', value: int
     @
   
   toBuffer: ->
     buff = new Buffer @length
     offset = 0
-    for value in values
+    for value in @_values
       switch value.type
         # please keep in alphabetical order
         when 'byte'
@@ -73,9 +73,16 @@ class exports.BufferBuilder
           offset += 4
         when 'string'
           buff.write value.value, offset, value.length, value.encoding
-          offset += value.length 
+          offset += value.length
+        when 'uint16BE'
+          buff.writeUInt16BE value.value, offset
+          offset += 2
+        when 'uint16LE'
+          buff.writeUInt16LE value.value, offset
+          offset += 2
         when 'uint32LE'
           buff.writeUInt32LE value.value, offset
           offset += 4
         else
           throw new Error 'Unrecognized type: ' + value.type
+    buff

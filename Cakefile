@@ -1,13 +1,14 @@
 fs = require 'fs'
 path = require 'path'
+util = require 'util'
 { spawn, exec } = require 'child_process'
 
 run = (cmd, args, cb) ->
   proc = spawn cmd, args
-  proc.stderr.on 'data', (buffer) -> process.stderr.write buffer
-  proc.stdout.on 'data', (buffer) -> process.stdout.write buffer
+  proc.stderr.pipe process.stderr, end: false
+  proc.stdout.pipe process.stdout, end: false
   proc.on 'exit', (status) ->
-   process.exit(1) if status != 0
+   process.kill(1) if status != 0
    cb() if typeof cb is 'function'
     
 compile = (includeTests, cb) ->
@@ -35,4 +36,5 @@ task 'compile', 'compile JS', ->
 task 'test', 'test node-tds', ->
   invoke 'clean'
   compile false, ->
-    run 'node', ['node_modules/mocha/bin/mocha', '-R', 'spec'], -> 'Tests complete'
+    run 'node', ['node_modules/mocha/bin/mocha', '-t', '100s', '-c', '-R', 'spec'], 
+      -> 'Tests complete'

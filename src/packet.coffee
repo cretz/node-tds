@@ -16,7 +16,7 @@ class exports.Packet
   
   toBuffer: (builder, context) -> throw new Error 'Unimplemented'
   
-  insertPacketHeader: (builder) ->
+  insertPacketHeader: (builder, endOfMessage = true) ->
     # packet type
     builder.insertByte @type, 0
     # status
