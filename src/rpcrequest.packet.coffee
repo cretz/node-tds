@@ -3,8 +3,10 @@
 class exports.RpcRequestPacket extends Packet
   
   @type: 0x03
-  
   @name: 'RPCPacket'
+  
+  type: 0x03
+  name: 'RPCPacket'
   
   procedureId: null
   

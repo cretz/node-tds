@@ -3,8 +3,10 @@
 class exports.LoginAckPacket extends Packet
   
   @type: 0xAD
-  
   @name: 'LOGINACK'
+  
+  type: 0xAD
+  name: 'LOGINACK'
   
   interface: 0
 

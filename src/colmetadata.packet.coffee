@@ -4,8 +4,10 @@
 class exports.ColMetaDataPacket extends Packet
   
   @type: 0x81
-  
   @name: 'COLMETADATA'
+  
+  type: 0x81
+  name: 'COLMETADATA'
   
   columns: []
   

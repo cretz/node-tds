@@ -7,7 +7,7 @@ class exports.BufferStream
   _offsetStart: null
   
   append: (buffer) ->
-    if @_buffer?
+    if not @_buffer?
       @_buffer = buffer
     else
       newBuffer = new Buffer @_buffer.length + buffer.length
@@ -31,8 +31,8 @@ class exports.BufferStream
     @_offsetStart = null
     
   assertBytesAvailable: (amountNeeded) ->
-    if amountNeeded + @_offset >= @_buffer.length
-      throw new StreamIndexOutOfBoundsError
+    if amountNeeded + @_offset > @_buffer.length
+      throw new BufferStream.StreamIndexOutOfBoundsError 'Index out of bounds'
       
   currentOffset: -> @_offset - @_offsetStart
     
@@ -85,7 +85,7 @@ class exports.BufferStream
   ###
   readStringFromIndex: (index, lengthInBytes, encoding) ->
     if index + @_offsetStart >= @_buffer.length
-      throw new StreamIndexOutOfBoundsError
+      throw new BufferStream.StreamIndexOutOfBoundsError 'Index out of bounds'
     @_buffer.toString encoding, index + @_offsetStart, index + @_offsetStart + lengthInBytes
     
   readUcs2String: (length) ->
@@ -100,20 +100,31 @@ class exports.BufferStream
   readUcs2StringFromIndex: (index, length) ->
     @readStringFromIndex index, length * 2, 'ucs2'
   
+  readUInt16BE: ->
+    @assertBytesAvailable 2
+    ret = @_buffer.readUInt16BE @_offset
+    @_offset += 2
+    ret
+    
   readUInt16LE: ->
     @assertBytesAvailable 2
-    ret = @_buffer.readUInt16LE offset
-    offset += 2
+    ret = @_buffer.readUInt16LE @_offset
+    @_offset += 2
     ret
     
   readUInt32LE: ->
     @assertBytesAvailable 4
-    ret = @_buffer.readUInt32LE offset
-    offset += 4
+    ret = @_buffer.readUInt32LE @_offset
+    @_offset += 4
     ret
     
   skip: (length) ->
     @assertBytesAvailable length
-    offset += length
-
-class exports.StreamIndexOutOfBoundsError extends Error
+    @_offset += length
+  
+  @StreamIndexOutOfBoundsError: class exports.StreamIndexOutOfBoundsError extends Error
+    
+    name: 'StreamIndexOutOfBoundsError'
+    
+    constructor: (@message) ->
+      @stack = (new Error).stack

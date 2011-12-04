@@ -3,8 +3,10 @@
 class exports.SqlBatchPacket extends Packet
   
   @type: 0x01
-  
   @name: 'SQLBatch'
+  
+  type: 0x01
+  name: 'SQLBatch'
   
   sqlText: ''
   

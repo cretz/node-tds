@@ -3,8 +3,10 @@
 class exports.PreLoginPacket extends Packet
   
   @type: 0x12
-  
   @name: 'PRELOGIN'
+  
+  type: 0x12
+  name: 'PRELOGIN'
   
   version: [0x08, 0x00, 0x01, 0x55, 0x00, 0x00]
   
@@ -16,16 +18,18 @@ class exports.PreLoginPacket extends Packet
   
   fromBuffer: (stream) ->
     pendingValues = []
-    while tokenType = stream.readUInt16LE() isnt 0xFF
+    while stream.readByte() isnt 0xFF
+      stream.overrideOffset stream.currentOffset() - 1
       pendingValues.push
-        type: tokenType
+        type: stream.readUInt16LE()
         offset: stream.readUInt16LE()
         length: stream.readByte()
     for pendingValue in pendingValues
       switch pendingValue.type
         when 0 then @version = stream.readBytes 6
-        when 1 then @encryption = stream.readByte() is 1
-        when 2 
+        when 1 then @encryption = stream.readByte()
+        when 2
+          console.log 'Reading string of length: %d', pendingValue.length - 1
           @instanceName = stream.readAsciiString pendingValue.length - 1
           stream.skip 1
         when 3 then @threadId = stream.readUInt32LE()

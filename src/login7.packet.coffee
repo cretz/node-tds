@@ -4,8 +4,10 @@
 class exports.Login7Packet extends Packet
   
   @type: 0x10
-  
   @name: 'LOGIN7'
+  
+  type: 0x10
+  name: 'LOGIN7'
   
   ###*
   * The version of TDS to use.

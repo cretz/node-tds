@@ -58,3 +58,11 @@ class exports.Packet
     # return
     builder
 
+  toString: ->
+    ret = ''
+    util = require 'util'
+    for key, value of @
+      if typeof value isnt 'function'
+        if ret isnt '' then ret += ', '
+        ret += key + ': ' + util.format value
+    ret

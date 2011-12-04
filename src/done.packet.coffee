@@ -3,8 +3,10 @@
 class exports.DonePacket extends Packet
   
   @type: 0xFD
-  
   @name: 'DONE'
+  
+  type: 0xFD
+  name: 'DONE'
   
   status: null
   

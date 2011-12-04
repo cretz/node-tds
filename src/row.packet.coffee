@@ -3,8 +3,10 @@
 class exports.RowPacket extends Packet
   
   @type: 0xD1
-  
   @name: 'ROW'
+  
+  type: 0xD1
+  name: 'ROW'
   
   values: []
   

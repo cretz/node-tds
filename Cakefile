@@ -36,5 +36,5 @@ task 'compile', 'compile JS', ->
 task 'test', 'test node-tds', ->
   invoke 'clean'
   compile false, ->
-    run 'node', ['node_modules/mocha/bin/mocha', '-t', '100s', '-c', '-R', 'spec'], 
+    run 'node', ['node_modules/mocha/bin/mocha', '-t', '100s', '-R', 'spec'], 
       -> 'Tests complete'
