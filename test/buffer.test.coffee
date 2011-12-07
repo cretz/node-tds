@@ -6,7 +6,9 @@ assert = require 'assert'
 describe 'BufferBuilder and BufferStream', ->
   it 'should marshal and unmarshal all values properly', (done) ->
     try
+      # create builder
       bldr = new BufferBuilder()
+      # append values
       bldr.appendByte(1)
          .appendBytes([2, 3])
          .appendInt32LE(4)
@@ -14,10 +16,16 @@ describe 'BufferBuilder and BufferStream', ->
          .appendAsciiString('ascii string')
          .appendUInt16LE(5)
          .appendUInt32LE(6)
+         # write buffer
       buff = bldr.toBuffer()
+      assert.equal buff.length, bldr.length
+      # create stream
       stream = new BufferStream()
+      # append buffer
       stream.append buff
+      # start read
       stream.beginTransaction()
+      # check values
       assert.equal stream.readByte(), 1
       bytes = stream.readBytes(2)
       assert.equal bytes.length, 2
@@ -29,6 +37,20 @@ describe 'BufferBuilder and BufferStream', ->
       assert.equal stream.readUInt16LE(), 5
       assert.equal stream.readUInt32LE(), 6
       assert.equal stream.currentOffset(), buff.length
+      # insert values
+      bldr.insertByte 7, 0
+      bldr.insertUInt16BE 8, 0
+      # add to stream
+      buff = bldr.toBuffer()
+      stream = new BufferStream()
+      stream.append buff
+      stream.beginTransaction()
+      # check inserted
+      assert.equal stream.readUInt16BE(), 8
+      assert.equal stream.readByte(), 7
+      # strange global leak
+      delete global.val
+      # done
       done()
     catch err
       console.log err.stack

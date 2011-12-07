@@ -20,7 +20,7 @@ class exports.LoginAckPacket extends Packet
   
   buildNum: 0
   
-  fromBuffer: (stream) ->
+  fromBuffer: (stream, context) ->
     stream.assertBytesAvailable stream.readUInt16LE()
     @interface = stream.readByte()
     @tdsVersion = stream.readUInt32LE()

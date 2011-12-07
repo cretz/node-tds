@@ -128,7 +128,7 @@ class exports.TdsClient
       # see if we have a packet
       @_stream.beginTransaction()
       # grab packet
-      header = Packet.retrieveHeader @_stream
+      header = Packet.retrieveHeader @_stream, @
       # instantiate
       packet = new @_getPacketFromType header.type
       # parse

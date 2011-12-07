@@ -26,7 +26,6 @@ describe 'TdsClient', ->
   
   describe '#connect()', ->
     it 'should connect without errors', (done) ->
-      ###
       succeeded = false    
       client = new TdsClient
         error: (err) ->
@@ -40,7 +39,6 @@ describe 'TdsClient', ->
       client.connect
         #TODO move this in a conf
         host: '192.168.56.1'
-      ###
-      done()
+        port: 12345
     
     it 'should return an error on invalid host/port'

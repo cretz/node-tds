@@ -16,8 +16,9 @@ class exports.PreLoginPacket extends Packet
   
   threadId: process.pid
   
-  fromBuffer: (stream) ->
+  fromBuffer: (stream, context) ->
     pendingValues = []
+    console.log 'current offset: ' + stream.currentOffset()
     while stream.readByte() isnt 0xFF
       stream.overrideOffset stream.currentOffset() - 1
       pendingValues.push
@@ -26,16 +27,18 @@ class exports.PreLoginPacket extends Packet
         length: stream.readByte()
     for pendingValue in pendingValues
       switch pendingValue.type
-        when 0 then @version = stream.readBytes 6
-        when 1 then @encryption = stream.readByte()
+        when 0
+          @version = stream.readBytes 6
+        when 1
+          @encryption = stream.readByte()
         when 2
-          console.log 'Reading string of length: %d', pendingValue.length - 1
           @instanceName = stream.readAsciiString pendingValue.length - 1
           stream.skip 1
-        when 3 then @threadId = stream.readUInt32LE()
+        when 3
+          @threadId = stream.readUInt32LE()
         else stream.skip pendingValue.length
         
-  toBuffer: (builder) ->
+  toBuffer: (builder, context) ->
     # version
     if @version.length isnt 6 then throw new Error 'Invalid version length'
     builder.appendUInt16LE 0
@@ -63,6 +66,6 @@ class exports.PreLoginPacket extends Packet
     builder.appendAsciiString(@instanceName).appendByte 0
     builder.appendUInt32LE @threadId
     # header
-    @insertPacketHeader builder
+    @insertPacketHeader builder, context
 
     

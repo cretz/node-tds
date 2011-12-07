@@ -16,5 +16,5 @@ class exports.RpcRequestPacket extends Packet
   
   parameters: null
   
-  toBuffer: (builder) ->
+  toBuffer: (builder, context) ->
     

@@ -14,7 +14,7 @@ class exports.DonePacket extends Packet
   
   rowCount: null
   
-  fromBuffer: (stream) ->
+  fromBuffer: (stream, context) ->
     @status = stream.readUInt16LE()
     @currentCommand = stream.readUInt16LE()
     @rowCount = [stream.readUInt32LE(), stream.readUInt32LE()]

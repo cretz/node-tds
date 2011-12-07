@@ -16,7 +16,7 @@ class exports.MessagePacket extends Packet
   
   lineNumber: null
   
-  fromBuffer: (stream) ->
+  fromBuffer: (stream, context) ->
     # assert length
     len = stream.readUInt16LE()
     stream.assertBytesAvailable len

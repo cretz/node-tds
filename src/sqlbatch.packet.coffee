@@ -10,8 +10,8 @@ class exports.SqlBatchPacket extends Packet
   
   sqlText: ''
   
-  toBuffer: (builder) ->
+  toBuffer: (builder, context) ->
     builder.appendUcs2String @sqlText
     txHeader = @buildTransactionDescriptorAllHeader 0, 1
-    @insertAllHeaders builder, [txHeader]
-    @insertPacketHeader builder
+    @insertAllHeaders builder, context [txHeader]
+    @insertPacketHeader builder, context

@@ -73,13 +73,52 @@ class exports.Login7Packet extends Packet
   
   clientId: [0, 0, 0, 0, 0, 0]
 
-  toBuffer: (builder) ->
+  fromBuffer: (stream, context) ->
+    length = stream.readUInt32LE()
+    stream.assertBytesAvailable length - 4
+    @tdsVersion = stream.readUInt32LE()
+    @packetSize = stream.readUInt32LE()
+    @clientProgramVersion = stream.readUInt32LE()
+    @clientProcessId = stream.readUInt32LE()
+    @connectionId = stream.readUInt32LE()
+    @optionFlags1 = stream.readByte()
+    @optionFlags2 = stream.readByte()
+    @typeFlags = stream.readByte()
+    @optionFlags3 = stream.readByte()
+    @clientTimeZone = stream.readUInt32LE()
+    @clientLcid = stream.readUInt32LE()
+    # function for grabbing strings
+    pendingStrings = {}
+    getPositionAndLength = (name) ->
+      pendingStrings[name] =
+        pos: stream.readUInt16LE()
+        length: stream.readUInt16LE()
+    # grab
+    getPositionAndLength 'hostName'
+    getPositionAndLength 'userName'
+    getPositionAndLength '.password'
+    getPositionAndLength 'appName'
+    getPositionAndLength 'serverName'
+    getPositionAndLength 'unused'
+    getPositionAndLength 'interfaceLibraryName'
+    getPositionAndLength 'language'
+    getPositionAndLength 'database'
+    getPositionAndLength 'clientId'
+    getPositionAndLength '.ntlm'
+    # ignore length
+    stream.skip 4
+    # set strings
+    for key, value of pendingStrings
+      str = stream.readUcs2String value.length
+      if key.charAt 0 isnt '.'
+        @[key] = str
+
+
+  toBuffer: (builder, context) ->
     # validate
     if @serverName.length is 0 then throw new Error 'serverName not specified'
     if @userName.length is 0 then throw new Error 'userName not specified'
     if @domain.length > 0 then throw new Error 'NTLM not yet supported'
-    # type
-    builder.append
     # length
     length = 86 + 2 * (
       @hostName.length +
@@ -104,7 +143,7 @@ class exports.Login7Packet extends Packet
     builder.appendUInt32LE @clientLcid
     # strings
     curPos = 86
-    # serverName
+    # hostName
     builder.appendUInt16LE curPos
     builder.appendUInt16LE @hostName.length
     curPos += @hostName.length * 2
@@ -157,7 +196,7 @@ class exports.Login7Packet extends Packet
     builder.appendUcs2String @language
     builder.appendUcs2String @database
     # header
-    @insertPacketHeader builder
+    @insertPacketHeader builder, context
 
   _encryptPass: ->
     ret = new Buffer @password, 'ucs2'

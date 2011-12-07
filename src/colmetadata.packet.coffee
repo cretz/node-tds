@@ -11,7 +11,7 @@ class exports.ColMetaDataPacket extends Packet
   
   columns: []
   
-  fromBuffer: (stream) ->
+  fromBuffer: (stream, context) ->
     len = stream.readUInt16LE()
     if len isnt 0xFFFF then for i in [0..len - 1]
       @columns.push column = 
