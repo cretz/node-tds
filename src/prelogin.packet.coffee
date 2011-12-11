@@ -3,9 +3,11 @@
 class exports.PreLoginPacket extends Packet
   
   @type: 0x12
+  @serverType: 0x04
   @name: 'PRELOGIN'
   
   type: 0x12
+  serverType: 0x04
   name: 'PRELOGIN'
   
   version: [0x08, 0x00, 0x01, 0x55, 0x00, 0x00]
@@ -25,17 +27,26 @@ class exports.PreLoginPacket extends Packet
         type: stream.readUInt16LE()
         offset: stream.readUInt16LE()
         length: stream.readByte()
+      if context.logDebug
+        val = pendingValues[pendingValues.length - 1]
+        console.log 'Added pending value type: %d, offset: %d, length: %d',
+          val.type, val.offset, val.length
     for pendingValue in pendingValues
       switch pendingValue.type
         when 0
           @version = stream.readBytes 6
+          if context.logDebug then console.log 'Version: ', @version
         when 1
           @encryption = stream.readByte()
+          if context.logDebug then console.log 'Encryption: ', @encryption
         when 2
+          if context.logDebug then console.log 'Reading instance name of length: %d', pendingValue.length
           @instanceName = stream.readAsciiString pendingValue.length - 1
           stream.skip 1
+          if context.logDebug then console.log 'Instance name: ', @instanceName
         when 3
-          @threadId = stream.readUInt32LE()
+          # ignore this coming from the server
+          if context.logDebug then console.log 'Ignoring thread ID'
         else stream.skip pendingValue.length
         
   toBuffer: (builder, context) ->
@@ -68,4 +79,4 @@ class exports.PreLoginPacket extends Packet
     # header
     @insertPacketHeader builder, context
 
-    
+  

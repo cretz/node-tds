@@ -29,16 +29,17 @@ describe 'TdsClient', ->
       succeeded = false    
       client = new TdsClient
         error: (err) ->
+          console.log 'Error: ', err.stack
           done err
         connect: (packet) ->
-          succeeded = true
+          console.log 'Connected'
+          done()
         end: ->
-          if succeeded then done()
           throw new Error 'Never connected'
       client.logError = client.logDebug = true
       client.connect
         #TODO move this in a conf
-        host: '192.168.56.1'
-        port: 12345
+        host: 'localhost'
+        port: 1433
     
     it 'should return an error on invalid host/port'

@@ -108,16 +108,16 @@ class exports.TdsClient
     
   _getPacketFromType: (type) ->
     switch type
-      when ColMetaDataPacket.type then ColMetaDataPacket
-      when DonePacket.type then DonePacket
-      when ErrorMessagePacket.type then ErrorMessagePacket
-      when InfoMessagePacket.type then InfoMessagePacket
-      when Login7Packet.type then Login7Packet
-      when LoginAckPacket.type then LoginAckPacket
-      when PreLoginPacket.type then PreLoginPacket
-      when RowPacket.type then RowPacket
-      when SqlBatchPacket.type then SqlBatchPacket
-      else throw new Error 'Unrecognized type: ' + header.type 
+      when ColMetaDataPacket.type then new ColMetaDataPacket
+      when DonePacket.type then new DonePacket
+      when ErrorMessagePacket.type then new ErrorMessagePacket
+      when InfoMessagePacket.type then new InfoMessagePacket
+      when Login7Packet.type then new Login7Packet
+      when LoginAckPacket.type then new LoginAckPacket
+      when PreLoginPacket.type, PreLoginPacket.serverType then new PreLoginPacket
+      when RowPacket.type then new RowPacket
+      when SqlBatchPacket.type then new SqlBatchPacket
+      else throw new Error 'Unrecognized type: ' + type 
     
   _socketData: (data) =>
     if @logDebug then console.log 'Received %d bytes', data.length
@@ -130,7 +130,7 @@ class exports.TdsClient
       # grab packet
       header = Packet.retrieveHeader @_stream, @
       # instantiate
-      packet = new @_getPacketFromType header.type
+      packet = @_getPacketFromType header.type
       # parse
       packet.fromBuffer @_stream, @
       # commit
@@ -141,39 +141,38 @@ class exports.TdsClient
         # rollback
         @_stream.rollbackTransaction()
       else
-        if @logError then console.error 'Error reading stream: ', err 
+        if @logError then console.error 'Error reading stream: ', err.stack 
         throw err
       return
     if @logDebug then console.log 'Handling packet of type %s', packet.name
     try
       # handle packet
-      switch packet.type
-        when ColMetaDataPacket.type
-          @.columns = packet.columns
-          @_handler.metadata? packet
-        when DonePacket.type
-          @_handler.done? packet
-        when ErrorMessagePacket.type
-          switch @state
-            when TdsConstants.statesByName['CONNECTING']
-              @state = TdsConstants.statesByName['INITIAL']
-              @end()
-            when TdsConstants.statesByName['LOGGING IN']
-              @state = TdsConstants.statesByName['CONNECTED']
-          @_handler.error? packet
-        when InfoMessagePacket.type
-          @_handler.info? packet
-        when LoginAckPacket.type
-          @state = TdsConstants.statesByName['LOGGED IN']
-          @_handler.login? packet
-        when PreLoginPacket.type
-          @state = TdsConstants.statesByName['CONNECTED']
-          @_handler.connect? packet
-        when RowPacket.type
-          @_handler.row? packet
-        else 
-          if @logError then console.error 'Unrecognized type: ' + packet.type
-          throw new Error 'Unrecognized type: ' + packet.type
+      if packet instanceof ColMetaDataPacket
+        @.columns = packet.columns
+        @_handler.metadata? packet
+      else if packet instanceof DonePacket
+        _handler.done? packet
+      else if packet instanceof ErrorMessagePacket
+        switch @state
+          when TdsConstants.statesByName['CONNECTING']
+            @state = TdsConstants.statesByName['INITIAL']
+            @end()
+          when TdsConstants.statesByName['LOGGING IN']
+            @state = TdsConstants.statesByName['CONNECTED']
+        @_handler.error? packet
+      else if packet instanceof InfoMessagePacket
+        @_handler.info? packet
+      else if packet instanceof LoginAckPacket
+        @state = TdsConstants.statesByName['LOGGED IN']
+        @_handler.login? packet
+      else if packet instanceof PreLoginPacket
+        @state = TdsConstants.statesByName['CONNECTED']
+        @_handler.connect? packet
+      else if packet instanceof RowPacket
+        @_handler.row? packet
+      else 
+        if @logError then console.error 'Unrecognized type: ' + packet.type
+        throw new Error 'Unrecognized type: ' + packet.type
     catch err
       if @logError then console.error 'Error reading stream: ', err 
       throw err
