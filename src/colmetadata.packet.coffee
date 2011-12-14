@@ -5,14 +5,14 @@ class exports.ColMetaDataPacket extends Packet
   
   @type: 0x81
   @name: 'COLMETADATA'
-  
-  type: 0x81
-  name: 'COLMETADATA'
-  
-  columns: []
+
+  constructor: ->
+    @type = 0x81
+    @name = 'COLMETADATA'
   
   fromBuffer: (stream, context) ->
     len = stream.readUInt16LE()
+    @columns = new Array len
     if len isnt 0xFFFF then for i in [0..len - 1]
       @columns.push column = 
         # userType

@@ -5,14 +5,9 @@ class exports.DonePacket extends Packet
   @type: 0xFD
   @name: 'DONE'
   
-  type: 0xFD
-  name: 'DONE'
-  
-  status: null
-  
-  currentCommand: null
-  
-  rowCount: null
+  constructor: ->
+    @type = 0xFD
+    @name = 'DONE'
   
   fromBuffer: (stream, context) ->
     @status = stream.readUInt16LE()

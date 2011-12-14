@@ -5,5 +5,6 @@ class exports.ErrorMessagePacket extends MessagePacket
   @type: 0xAA
   @name: 'ERROR'
 
-  type: 0xAA
-  name: 'ERROR'
+  constructor: ->
+    @type = 0xAA
+    @name = 'ERROR'

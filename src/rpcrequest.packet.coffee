@@ -5,16 +5,9 @@ class exports.RpcRequestPacket extends Packet
   @type: 0x03
   @name: 'RPCPacket'
   
-  type: 0x03
-  name: 'RPCPacket'
-  
-  procedureId: null
-  
-  procedureName: null
-  
-  optionFlags: null
-  
-  parameters: null
-  
+  constructor: ->
+  	@type = 0x03
+  	@name = 'RPCPacket'
+
   toBuffer: (builder, context) ->
-    
+    #TODO

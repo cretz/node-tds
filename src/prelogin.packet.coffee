@@ -5,22 +5,14 @@ class exports.PreLoginPacket extends Packet
   @type: 0x12
   @serverType: 0x04
   @name: 'PRELOGIN'
-  
-  type: 0x12
-  serverType: 0x04
-  name: 'PRELOGIN'
-  
-  version: [0x08, 0x00, 0x01, 0x55, 0x00, 0x00]
-  
-  encryption: 2
-  
-  instanceName: ''
-  
-  threadId: process.pid
-  
+
+  constructor: ->
+    @type = 0x12
+    @serverType = 0x04
+    @name = 'PRELOGIN'
+
   fromBuffer: (stream, context) ->
     pendingValues = []
-    console.log 'current offset: ' + stream.currentOffset()
     while stream.readByte() isnt 0xFF
       stream.overrideOffset stream.currentOffset() - 1
       pendingValues.push
@@ -46,16 +38,18 @@ class exports.PreLoginPacket extends Packet
           if context.logDebug then console.log 'Instance name: ', @instanceName
         when 3
           # ignore this coming from the server
-          if context.logDebug then console.log 'Ignoring thread ID'
+          if context.logDebug then console.log 'Ignoring thread ID: '
         else stream.skip pendingValue.length
         
   toBuffer: (builder, context) ->
     # version
+    @version ?= [0x08, 0x00, 0x01, 0x55, 0x00, 0x00]
     if @version.length isnt 6 then throw new Error 'Invalid version length'
     builder.appendUInt16LE 0
     builder.appendUInt16LE 21
     builder.appendByte 6
     # encryption
+    @encryption ?= 2
     builder.appendUInt16LE 1
     builder.appendUInt16LE 27
     builder.appendByte 1
@@ -65,7 +59,7 @@ class exports.PreLoginPacket extends Packet
     builder.appendUInt16LE 28
     builder.appendByte @instanceName.length + 1
     # threadId
-    @threadId ?= 0
+    @threadId ?= process.pid
     builder.appendUInt16LE 3
     builder.appendUInt16LE @instanceName.length + 29
     builder.appendByte 4

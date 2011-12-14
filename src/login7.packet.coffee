@@ -5,73 +5,10 @@ class exports.Login7Packet extends Packet
   
   @type: 0x10
   @name: 'LOGIN7'
-  
-  type: 0x10
-  name: 'LOGIN7'
-  
-  ###*
-  * The version of TDS to use.
-  * Default is TdsConstants.versionsByVersion['7.1.1']
-  ###
-  tdsVersion: TdsConstants.versionsByVersion['7.1.1']
-  
-  ###*
-  * How big the packets should be.
-  * Default is 0 (SQL server decides)
-  ###
-  packetSize: 0
-  
-  ###*
-  * The client version.
-  * Default is 7
-  ###
-  clientProgramVersion: 7
-  
-  ###*
-  * The client process ID.
-  * Default is the current process ID
-  ###
-  clientProcessId: process.pid
-  
-  ###*
-  * The connection ID.
-  * Default is 0
-  ###
-  connectionId = 0
-  
-  optionFlags1: 0
-  
-  optionFlags2: 0x03
-  
-  typeFlags: 0
-  
-  optionFlags3: 0
-  
-  clientTimeZone: 0
-  
-  clientLcid: 0
-  
-  hostName: require('os').hostname()
 
-  domain: ''
-  
-  userName: ''
-  
-  password: ''
-  
-  appName: 'node-tds'
-  
-  serverName: ''
-  
-  unused: ''
-  
-  interfaceLibraryName: 'node-tds'
-  
-  language: ''
-  
-  database: ''
-  
-  clientId: [0, 0, 0, 0, 0, 0]
+  constructor: ->
+    @type = 0x10
+    @name = 'LOGIN7'
 
   fromBuffer: (stream, context) ->
     length = stream.readUInt32LE()
@@ -96,6 +33,7 @@ class exports.Login7Packet extends Packet
     # grab
     getPositionAndLength 'hostName'
     getPositionAndLength 'userName'
+    #TODO: decrypt pass
     getPositionAndLength '.password'
     getPositionAndLength 'appName'
     getPositionAndLength 'serverName'
@@ -103,25 +41,37 @@ class exports.Login7Packet extends Packet
     getPositionAndLength 'interfaceLibraryName'
     getPositionAndLength 'language'
     getPositionAndLength 'database'
-    getPositionAndLength 'clientId'
+    @clientId = stream.readBytes 6
     getPositionAndLength '.ntlm'
     # ignore length
     stream.skip 4
     # set strings
     for key, value of pendingStrings
+      if context.logDebug 
+        console.log 'Reading %s at %d of length %d', key, value.pos, value.length
       str = stream.readUcs2String value.length
+      if context.logDebug
+        console.log 'Read %s: %s', key, str
       if key.charAt 0 isnt '.'
         @[key] = str
 
 
   toBuffer: (builder, context) ->
     # validate
-    if @serverName.length is 0 then throw new Error 'serverName not specified'
-    if @userName.length is 0 then throw new Error 'userName not specified'
-    if @domain.length > 0 then throw new Error 'NTLM not yet supported'
+    if not @serverName? or @serverName.length is 0 then throw new Error 'serverName not specified'
+    if not @userName? or @userName.length is 0 then throw new Error 'userName not specified'
+    if @domain? and @domain.length > 0 then throw new Error 'NTLM not yet supported'
     # length
+    @hostName ?= require('os').hostname()
+    @password ?= ''
+    @appName ?= 'node-tds'
+    @interfaceLibraryName ?= 'node-tds'
+    @language ?= ''
+    @database ?= ''
     length = 86 + 2 * (
       @hostName.length +
+      @userName.length +
+      @password.length +
       @appName.length +
       @serverName.length +
       @interfaceLibraryName.length +
@@ -130,17 +80,17 @@ class exports.Login7Packet extends Packet
     ) 
     builder.appendUInt32LE length
     # standard vals
-    builder.appendUInt32LE @tdsVersion
-    builder.appendUInt32LE @packetSize
-    builder.appendUInt32LE @clientProgramVersion
-    builder.appendUInt32LE @clientProcessId
-    builder.appendUInt32LE @connectionId
-    builder.appendByte @optionFlags1
-    builder.appendByte @optionFlags2
-    builder.appendByte @typeFlags
-    builder.appendByte @optionFlags3
-    builder.appendUInt32LE @clientTimeZone
-    builder.appendUInt32LE @clientLcid
+    builder.appendUInt32LE @tdsVersion ? TdsConstants.versionsByVersion['7.1.1']
+    builder.appendUInt32LE @packetSize ? 0
+    builder.appendUInt32LE @clientProgramVersion ? 7
+    builder.appendUInt32LE @clientProcessId ? process.pid
+    builder.appendUInt32LE @connectionId ? 0
+    builder.appendByte @optionFlags1 ? 0
+    builder.appendByte @optionFlags2 ? 0x03
+    builder.appendByte @typeFlags ? 0
+    builder.appendByte @optionFlags3 ? 0
+    builder.appendUInt32LE @clientTimeZone ? 0
+    builder.appendUInt32LE @clientLcid ? 0
     # strings
     curPos = 86
     # hostName
@@ -165,8 +115,7 @@ class exports.Login7Packet extends Packet
     curPos += @serverName.length * 2
     # unused
     builder.appendUInt16LE curPos
-    builder.appendUInt16LE @unused.length
-    curPos += @unused.length * 2
+    builder.appendUInt16LE 0
     # interfaceLibraryName
     builder.appendUInt16LE curPos
     builder.appendUInt16LE @interfaceLibraryName.length
@@ -180,7 +129,7 @@ class exports.Login7Packet extends Packet
     builder.appendUInt16LE @database.length
     curPos += @database.length * 2
     # clientId
-    builder.appendBytes @clientId
+    builder.appendBytes @clientId ? [0, 0, 0, 0, 0, 0]
     # NTLM not supported right now
     builder.appendUInt16LE curPos
     builder.appendUInt16LE 0

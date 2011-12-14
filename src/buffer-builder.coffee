@@ -1,12 +1,17 @@
 class exports.BufferBuilder
   
   @getUcs2StringLength: (string) -> string.length * 2
-  
-  _values: []
-  
-  length: 0
+
+  constructor: ->
+    @_values = []
+    @length = 0
   
   # please keep functions in alphabetical order
+
+  appendBuffer: (buffer) ->
+    @length += buffer.length
+    @_values.push type: 'buffer', value: buffer
+    @
   
   appendByte: (byte) ->
     @length++
@@ -61,6 +66,9 @@ class exports.BufferBuilder
     for value in @_values
       switch value.type
         # please keep in alphabetical order
+        when 'buffer'
+          value.value.copy buff, offset
+          offset += value.value.length
         when 'byte'
           buff.set offset, value.value
           offset++

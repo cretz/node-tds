@@ -19,6 +19,7 @@ class exports.Packet
   
   insertPacketHeader: (builder, context, endOfMessage = true) ->
     # packet type
+    if context.logDebug then console.log 'Inserting header for type: ', @type
     builder.insertByte @type, 0
     # status
     builder.insertByte (if endOfMessage then 1 else 0), 1

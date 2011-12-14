@@ -2,20 +2,6 @@
 
 class exports.MessagePacket extends Packet
   
-  number: null
-  
-  state: null
-  
-  severity: null
-  
-  text: null
-  
-  serverName: null
-  
-  procName: null
-  
-  lineNumber: null
-  
   fromBuffer: (stream, context) ->
     # assert length
     len = stream.readUInt16LE()
@@ -23,7 +9,7 @@ class exports.MessagePacket extends Packet
     @number = stream.readInt32LE()
     @state = stream.readByte()
     @severity = stream.readByte()
-    text = stream.readUcs2String stream.readUInt16LE()
-    procName = stream.readUcs2String stream.readUInt16LE()
-    lineNumber = stream.readInt32LE()
+    @text = stream.readUcs2String stream.readUInt16LE()
+    @procName = stream.readUcs2String stream.readUInt16LE()
+    @lineNumber = stream.readInt32LE()
     

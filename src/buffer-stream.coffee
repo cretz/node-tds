@@ -1,11 +1,8 @@
 class exports.BufferStream
-  
-  _buffer: null
-  
-  _offset: 0
-  
-  _offsetStart: null
-  
+
+  constructor: ->
+    @_offset = 0
+    
   append: (buffer) ->
     if not @_buffer?
       @_buffer = buffer

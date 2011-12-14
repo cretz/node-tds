@@ -5,20 +5,9 @@ class exports.LoginAckPacket extends Packet
   @type: 0xAD
   @name: 'LOGINACK'
   
-  type: 0xAD
-  name: 'LOGINACK'
-  
-  interface: 0
-
-  tdsVersion: 0
-  
-  progName: ''
-
-  majorVer: 0
-  
-  minorVer: 0
-  
-  buildNum: 0
+  constructor: ->
+    type: 0xAD
+    name: 'LOGINACK'
   
   fromBuffer: (stream, context) ->
     stream.assertBytesAvailable stream.readUInt16LE()
@@ -29,5 +18,5 @@ class exports.LoginAckPacket extends Packet
     @majorVer = stream.readByte()
     @minorVer = stream.readByte()
     @buildNum = stream.readByte() << 8
-    @buildNum = stream.readByte()
+    @buildNum += stream.readByte()
     

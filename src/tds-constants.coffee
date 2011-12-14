@@ -5,19 +5,19 @@ class exports.TdsConstants
   ###
   @versionsByVersion:
     # SQL Server 7.0 and later
-    '7.0': 0x00000070
+    '7.0': 0x70000000
     # SQL Server 2000 and later
-    '7.1': 0x00000071
+    '7.1': 0x71000000
     # SQL Server 2000 SP1 and later
-    '7.1.1': 0x01000071
+    '7.1.1': 0x71000001
     # SQL Server 2005 and later
-    '7.2': 0x02000972
+    '7.2': 0x72090002
     # SQL Server 2008 and later
-    '7.3.A': 0x03000A73
+    '7.3.A': 0x730A0003
     # SQL Server 2008 (again) and later
-    '7.3.B': 0x03000B73
+    '7.3.B': 0x730B0003
     # SQL Server 2012 and later
-    '7.4': 0x04000074
+    '7.4': 0x74000004
     
   ###*
   * Versions indexed by the server-number in the spec

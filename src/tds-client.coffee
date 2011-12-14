@@ -17,17 +17,10 @@
 
 class exports.TdsClient
   
-  _socket: null
-  _preLoginConfig: null
-  _stream: null
-  _handler: null
-  
-  logDebug: false
-  logError: false
-  state: TdsConstants.statesByName['INITIAL']
-  
   constructor: (@_handler) ->
     if not @_handler? then throw new Error 'Handler required'
+    @logDebug = @logError = false
+    @state = TdsConstants.statesByName['INITIAL']
     
   connect: (config) ->
     if @state isnt TdsConstants.statesByName['INITIAL']
@@ -61,8 +54,7 @@ class exports.TdsClient
       # create packet
       login = new Login7Packet
       for key, value of config
-        if login.hasOwnProperty key
-          login[key] = value
+        login[key] = value
       # send
       @_sendPacket login
     catch err
@@ -103,7 +95,7 @@ class exports.TdsClient
     
   _socketError: (error) =>
     if @logError then console.error 'Error in socket: ', error
-    @_handler.error? err
+    @_handler?.error? error
     @end()
     
   _getPacketFromType: (type) ->
@@ -190,7 +182,8 @@ class exports.TdsClient
     
   _sendPacket: (packet) ->
     if @logDebug then console.log 'Sending packet: %s', packet.name
-    builder = packet.toBuffer new BufferBuilder, @
+    builder = new BufferBuilder()
+    builder = packet.toBuffer new BufferBuilder(), @
     buff = builder.toBuffer()
     if @logDebug then console.log 'Packet size: %d', buff.length
     @_socket.write buff
@@ -201,3 +194,4 @@ class exports.TdsClient
       @_socket.end()
     @_socket = null
     @state = TdsConstants.statesByName['INITIAL']
+    @_handler?.end?()

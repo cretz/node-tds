@@ -9,7 +9,8 @@ describe 'BufferBuilder and BufferStream', ->
       # create builder
       bldr = new BufferBuilder()
       # append values
-      bldr.appendByte(1)
+      bldr.appendBuffer(new Buffer('buff', 'utf8'))
+         .appendByte(1)
          .appendBytes([2, 3])
          .appendInt32LE(4)
          .appendUcs2String('ucs2 string')
@@ -26,6 +27,7 @@ describe 'BufferBuilder and BufferStream', ->
       # start read
       stream.beginTransaction()
       # check values
+      assert.equal stream.readBuffer(Buffer.byteLength('buff')).toString('utf8'), 'buff'
       assert.equal stream.readByte(), 1
       bytes = stream.readBytes(2)
       assert.equal bytes.length, 2

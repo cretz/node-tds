@@ -5,12 +5,12 @@ class exports.SqlBatchPacket extends Packet
   @type: 0x01
   @name: 'SQLBatch'
   
-  type: 0x01
-  name: 'SQLBatch'
-  
-  sqlText: ''
+  constructor: ->
+    @type = 0x01
+    @name = 'SQLBatch'
   
   toBuffer: (builder, context) ->
+    @sqlText ?= ''
     builder.appendUcs2String @sqlText
     txHeader = @buildTransactionDescriptorAllHeader 0, 1
     @insertAllHeaders builder, context [txHeader]
