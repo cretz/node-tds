@@ -10,7 +10,7 @@ class exports.Packet
       window: stream.readByte()
     if context.logDebug then console.log 'Retrieved header: ', ret
     # assert length
-    stream.assertBytesAvailable ret.length - 8
+    # stream.assertBytesAvailable ret.length - 8
     ret
   
   fromBuffer: (stream, context) -> throw new Error 'Unimplemented'

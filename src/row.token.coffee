@@ -1,6 +1,6 @@
-{Packet} = require './packet'
+{Token} = require './token'
 
-class exports.RowPacket extends Packet
+class exports.RowToken extends Token
   
   @type: 0xD1
   @name: 'ROW'

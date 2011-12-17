@@ -1,6 +1,6 @@
-{Packet} = require './packet'
+{Token} = require './token'
 
-class exports.LoginAckPacket extends Packet
+class exports.LoginAckToken extends Token
   
   @type: 0xAD
   @name: 'LOGINACK'
@@ -10,7 +10,8 @@ class exports.LoginAckPacket extends Packet
     name: 'LOGINACK'
   
   fromBuffer: (stream, context) ->
-    stream.assertBytesAvailable stream.readUInt16LE()
+    @length = 2 + stream.readUInt16LE()
+    stream.assertBytesAvailable @length - 2
     @interface = stream.readByte()
     @tdsVersion = stream.readUInt32LE()
     @progName = stream.readUcs2String stream.readByte() - 1

@@ -1,19 +1,12 @@
 {Socket} = require 'net'
-# {EventEmitter} = require 'events'
 
 {BufferBuilder} = require './buffer-builder'
 {BufferStream, StreamIndexOutOfBoundsError} = require './buffer-stream'
-{ColMetaDataPacket} = require './colmetadata.packet'
-{DonePacket} = require './done.packet'
-{ErrorMessagePacket} = require './error.message.packet'
-{InfoMessagePacket} = require './info.message.packet'
 {Login7Packet} = require './login7.packet'
-{LoginAckPacket} = require './loginack.packet'
 {Packet} = require './packet'
 {PreLoginPacket} = require './prelogin.packet'
-{RowPacket} = require './row.packet'
-{SqlBatchPacket} = require './sqlbatch.packet'
 {TdsConstants} = require './tds-constants'
+{TokenStreamPacket} = require './tokenstream.packet'
 
 class exports.TdsClient
   
@@ -98,33 +91,62 @@ class exports.TdsClient
     @_handler?.error? error
     @end()
     
-  _getPacketFromType: (type) ->
-    switch type
-      when ColMetaDataPacket.type then new ColMetaDataPacket
-      when DonePacket.type then new DonePacket
-      when ErrorMessagePacket.type then new ErrorMessagePacket
-      when InfoMessagePacket.type then new InfoMessagePacket
-      when Login7Packet.type then new Login7Packet
-      when LoginAckPacket.type then new LoginAckPacket
-      when PreLoginPacket.type, PreLoginPacket.serverType then new PreLoginPacket
-      when RowPacket.type then new RowPacket
-      when SqlBatchPacket.type then new SqlBatchPacket
-      else throw new Error 'Unrecognized type: ' + type 
-    
   _socketData: (data) =>
     if @logDebug then console.log 'Received %d bytes', data.length
-    header = null
+    @_stream.append data
+    # do we have a token stream already?
+    if @_tokenStream?
+      @_handleTokenStream()
+    else
+      @_handlePacket()
+  
+  _getPacketFromType: (type) ->
+    switch type
+      when TokenStreamPacket.type
+        if TdsConstants.statesByName['CONNECTING']
+          new PreLoginPacket
+        else
+          new TokenStreamPacket
+      when PreLoginPacket.type then new PreLoginPacket
+      else throw new Error 'Unrecognized type: ' + type 
+    
+  _handleToken: ->
+    token = null
+    loop
+      @_stream.beginTransaction()
+      try
+        currentOffset = @_stream.currentOffset()
+        token = @_tokenStream.nextToken @_stream, @
+        @_tokenStreamRemainingLength = @_stream.currentOffset() - currentOffset
+        @_stream.commitTransaction()
+      catch err
+        if err instanceof StreamIndexOutOfBoundsError
+          if @logDebug then console.log 'Stream incomplete, rolling back' 
+          # rollback
+          @_stream.rollbackTransaction()
+          return
+        else
+          if @logError then console.error 'Error reading stream: ', err.stack 
+          throw err
+      if @_tokenStreamRemainingLength is 0
+        @_tokenStream = @_tokenStreamRemainingLength = null
+      @_handler[token.handlerFunction]? token
+      if not @_tokenStream? then break
+
+  _handlePacket: ->
     packet = null
     try
-      @_stream.append data
-      # see if we have a packet
-      @_stream.beginTransaction()
       # grab packet
       header = Packet.retrieveHeader @_stream, @
       # instantiate
       packet = @_getPacketFromType header.type
-      # parse
-      packet.fromBuffer @_stream, @
+      # we stream token streams
+      if packet instanceof TokenStreamPacket
+        @_tokenStream = packet
+        @_tokenStreamRemainingLength = header.length - 8
+      else
+        # parse
+        packet.fromBuffer @_stream, @
       # commit
       @_stream.commitTransaction()
     catch err
@@ -132,42 +154,20 @@ class exports.TdsClient
         if @logDebug then console.log 'Stream incomplete, rolling back' 
         # rollback
         @_stream.rollbackTransaction()
+        return
       else
         if @logError then console.error 'Error reading stream: ', err.stack 
         throw err
-      return
-    if @logDebug then console.log 'Handling packet of type %s', packet.name
-    try
+    if @_tokenStream?
+      @_handleToken()
+    else
       # handle packet
-      if packet instanceof ColMetaDataPacket
-        @.columns = packet.columns
-        @_handler.metadata? packet
-      else if packet instanceof DonePacket
-        _handler.done? packet
-      else if packet instanceof ErrorMessagePacket
-        switch @state
-          when TdsConstants.statesByName['CONNECTING']
-            @state = TdsConstants.statesByName['INITIAL']
-            @end()
-          when TdsConstants.statesByName['LOGGING IN']
-            @state = TdsConstants.statesByName['CONNECTED']
-        @_handler.error? packet
-      else if packet instanceof InfoMessagePacket
-        @_handler.info? packet
-      else if packet instanceof LoginAckPacket
-        @state = TdsConstants.statesByName['LOGGED IN']
-        @_handler.login? packet
-      else if packet instanceof PreLoginPacket
+      if packet instanceof PreLoginPacket
         @state = TdsConstants.statesByName['CONNECTED']
         @_handler.connect? packet
-      else if packet instanceof RowPacket
-        @_handler.row? packet
       else 
         if @logError then console.error 'Unrecognized type: ' + packet.type
         throw new Error 'Unrecognized type: ' + packet.type
-    catch err
-      if @logError then console.error 'Error reading stream: ', err 
-      throw err
     
   _socketEnd: =>
     if @logDebug then console.log 'Socket ended remotely' 

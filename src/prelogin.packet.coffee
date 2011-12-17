@@ -3,12 +3,10 @@
 class exports.PreLoginPacket extends Packet
   
   @type: 0x12
-  @serverType: 0x04
   @name: 'PRELOGIN'
 
   constructor: ->
     @type = 0x12
-    @serverType = 0x04
     @name = 'PRELOGIN'
 
   fromBuffer: (stream, context) ->
