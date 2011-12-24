@@ -6,5 +6,6 @@ class exports.InfoMessageToken extends MessageToken
   @name: 'INFO'
 
   constructor: ->
-  	@type = 0xAB
-  	@name = 'INFO'
+    @type = 0xAB
+    @name = 'INFO'
+    @error = true

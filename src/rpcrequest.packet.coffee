@@ -3,11 +3,11 @@
 class exports.RpcRequestPacket extends Packet
   
   @type: 0x03
-  @name: 'RPCPacket'
+  @name: 'RPCRequest'
   
   constructor: ->
   	@type = 0x03
-  	@name = 'RPCPacket'
+  	@name = 'RPCRequest'
 
   toBuffer: (builder, context) ->
     #TODO

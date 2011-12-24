@@ -8,3 +8,4 @@ class exports.ErrorMessageToken extends MessageToken
   constructor: ->
     @type = 0xAA
     @name = 'ERROR'
+    @error = true

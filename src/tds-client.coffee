@@ -69,7 +69,7 @@ class exports.TdsClient
       @_sendPacket sqlBatch
     catch err
       if @logError then console.error 'Error executing: ', err
-      @_handler.error? err
+      @_handler?.error? err
       
   _socketConnect: =>
     if @logDebug then console.log 'Connection established, pre-login commencing'
