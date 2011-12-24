@@ -42,7 +42,7 @@ class exports.TdsConstants
   @statesByName: {}
   
   for key, value in @statesByNumber
-    @statesByName[value] = key
+    @statesByName[key] = value
 
   ###*
   * Data types, indexed by the type in the spec
@@ -236,12 +236,12 @@ class exports.TdsConstants
   ###*
   * Data types indexed be the name in the spec (all-caps)
   ###
-  @dataTypesByName = {}
+  @dataTypesByName: {}
   
   ###*
   * Data types indexed by the sql type in the spec (regular and lowercase)
   ###
-  @dataTypesBySqlType = {}
+  @dataTypesBySqlType: {}
   
   # init the data type references 
   for key, value of @dataTypesByType
@@ -255,7 +255,7 @@ class exports.TdsConstants
   ###*
   * RPC special procedures array, by id in the spec
   ###
-  @specialStoredProceduresById = [
+  @specialStoredProceduresById: [
     'None',
     'Sp_Cursor',
     'Sp_CursorOpen',
@@ -277,9 +277,76 @@ class exports.TdsConstants
   ###*
   * RPC special procedures by name (regular and lower cased) in the spec
   ###
-  @specialStoredProceduresByName = {}
+  @specialStoredProceduresByName: {}
   
   # init special stored procs
   for i in [0..@specialStoredProceduresById.length - 1]
     @specialStoredProceduresByName[@specialStoredProceduresById[i]] = i
     @specialStoredProceduresByName[@specialStoredProceduresById[i].toLowerCase()] = i
+
+  @envChangeTypesByNumber:
+    1:
+      name: 'Database'
+      oldValue: 'string'
+      newValue: 'string'
+    2:
+      name: 'Language'
+      oldValue: 'string'
+      newValue: 'string'
+    3:
+      name: 'Character Set'
+      oldValue: 'string'
+      newValue: 'string'
+    4:
+      name: 'Packet Size'
+      oldValue: 'string'
+      newValue: 'string'
+    5:
+      name: 'Unicode data sorting local id'
+      newValue: 'string'
+    6:
+      name: 'Unicode data sorting comparison flags'
+      newValue: 'string'
+    7:
+      name: 'SQL Collation'
+      oldValue: 'bytes'
+      newValue: 'bytes'
+    8:
+      name: 'Begin Transaction'
+      newValue: 'bytes'
+    9:
+      name: 'Commit Transaction'
+      oldValue: 'bytes'
+      newValue: 'byte'
+    10:
+      name: 'Rollback Transaction'
+      oldValue: 'bytes'
+    11:
+      name: 'Enlist DTC Transaction'
+      oldValue: 'bytes'
+    12:
+      name: 'Defect Transaction'
+      newValue: 'bytes'
+    13:
+      name: 'Database Mirroring Partner'
+      newValue: 'string'
+    15:
+      name: 'Promote Transaction'
+      newValue: 'longbytes'
+    16:
+      name: 'Transaction Manager Address'
+      newValue: 'bytes'
+    17:
+      name: 'Transaction Ended'
+      oldValue: 'bytes'
+    18:
+      name: 'Reset Completion Acknowledgement'
+    19:
+      name: 'User Instance Name'
+      newValue: 'string'
+    20:
+      name: 'Routing'
+      oldValue: '2byteskip'
+      newValue: 'shortbytes'
+    
+    

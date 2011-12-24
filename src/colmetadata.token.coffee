@@ -1,7 +1,7 @@
-{Packet} = require './packet'
+{Token} = require './token'
 {TdsConstants} = require './tds-constants'
 
-class exports.ColMetaDataPacket extends Packet
+class exports.ColMetaDataToken extends Token
   
   @type: 0x81
   @name: 'COLMETADATA'

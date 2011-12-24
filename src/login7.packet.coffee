@@ -149,8 +149,7 @@ class exports.Login7Packet extends Packet
 
   _encryptPass: ->
     ret = new Buffer @password, 'ucs2'
-    for i in [0..@password.length - 1]
-      byte = ret[i]
-      ret[i] = ((byte & 0x0f) | (byte >> 4)) ^ 0xA5
+    for i in [0..ret.length - 1]
+      ret[i] = (((ret[i] & 0x0f) << 4) | (ret[i] >> 4)) ^ 0xA5
     ret
 

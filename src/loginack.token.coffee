@@ -6,16 +6,18 @@ class exports.LoginAckToken extends Token
   @name: 'LOGINACK'
   
   constructor: ->
-    type: 0xAD
-    name: 'LOGINACK'
+    @type = 0xAD
+    @name = 'LOGINACK'
   
   fromBuffer: (stream, context) ->
-    @length = 2 + stream.readUInt16LE()
-    stream.assertBytesAvailable @length - 2
+    @length = stream.readUInt16LE()
+    stream.assertBytesAvailable @length
     @interface = stream.readByte()
     @tdsVersion = stream.readUInt32LE()
-    @progName = stream.readUcs2String stream.readByte() - 1
-    stream.skip 1
+    len = stream.readByte()
+    if context.logDebug then console.log 'Reading progName of length', len
+    @progName = stream.readUcs2String len
+    #stream.skip 1
     @majorVer = stream.readByte()
     @minorVer = stream.readByte()
     @buildNum = stream.readByte() << 8

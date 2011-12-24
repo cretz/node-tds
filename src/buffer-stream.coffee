@@ -44,6 +44,10 @@ class exports.BufferStream
   overrideOffset: (offset) ->
     @_offset = @_offsetStart + offset
       
+  peekByte: ->
+    @assertBytesAvailable 1
+    @_buffer.get @_offset
+      
   # please keep read methods in alphabetical order
   
   readBuffer: (length) ->

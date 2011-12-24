@@ -3,6 +3,7 @@
 {EnvChangeToken} = require './envchange.token'
 {ErrorMessageToken} = require './error.message.token'
 {InfoMessageToken} = require './info.message.token'
+{LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
 
 class exports.TokenStreamPacket extends Packet
@@ -22,9 +23,13 @@ class exports.TokenStreamPacket extends Packet
       when EnvChangeToken.type then new EnvChangeToken
       when ErrorMessageToken.type then new ErrorMessageToken
       when InfoMessageToken.type then new InfoMessageToken
+      when LoginAckToken.type then new LoginAckToken
       else throw new Error 'Unrecognized type: ' + type 
 
   nextToken: (stream, context) ->
-    token = @_getTokenFromType stream.readByte()
+    type = stream.readByte()
+    if context.logDebug then console.log 'Retrieved token type: ', type
+    token = @_getTokenFromType type
     token.fromBuffer stream, context
+    if context.logDebug then console.log 'Retrieved token: ', token
     token

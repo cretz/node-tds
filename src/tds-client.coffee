@@ -3,6 +3,7 @@
 {BufferBuilder} = require './buffer-builder'
 {BufferStream, StreamIndexOutOfBoundsError} = require './buffer-stream'
 {Login7Packet} = require './login7.packet'
+{LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
 {PreLoginPacket} = require './prelogin.packet'
 {TdsConstants} = require './tds-constants'
@@ -48,6 +49,7 @@ class exports.TdsClient
       login = new Login7Packet
       for key, value of config
         login[key] = value
+      @tdsVersion = config.tdsVersion ? TdsConstants.versionsByVersion['7.1.1']
       # send
       @_sendPacket login
     catch err
@@ -92,7 +94,8 @@ class exports.TdsClient
     @end()
     
   _socketData: (data) =>
-    if @logDebug then console.log 'Received %d bytes', data.length
+    if @logDebug then console.log 'Received %d bytes at state', data.length, 
+      @state, data
     @_stream.append data
     # do we have a token stream already?
     if @_tokenStream?
@@ -103,7 +106,7 @@ class exports.TdsClient
   _getPacketFromType: (type) ->
     switch type
       when TokenStreamPacket.type
-        if TdsConstants.statesByName['CONNECTING']
+        if @state is TdsConstants.statesByName['CONNECTING']
           new PreLoginPacket
         else
           new TokenStreamPacket
@@ -112,12 +115,15 @@ class exports.TdsClient
     
   _handleToken: ->
     token = null
+    receivedLoginAck = false
     loop
       @_stream.beginTransaction()
       try
         currentOffset = @_stream.currentOffset()
         token = @_tokenStream.nextToken @_stream, @
-        @_tokenStreamRemainingLength = @_stream.currentOffset() - currentOffset
+        @_tokenStreamRemainingLength -= @_stream.currentOffset() - currentOffset
+        if @logDebug then console.log 'From %d to %d offset, remaining: ',
+          currentOffset, @_stream.currentOffset(), @_tokenStreamRemainingLength
         @_stream.commitTransaction()
       catch err
         if err instanceof StreamIndexOutOfBoundsError
@@ -130,11 +136,25 @@ class exports.TdsClient
           throw err
       if @_tokenStreamRemainingLength is 0
         @_tokenStream = @_tokenStreamRemainingLength = null
-      @_handler[token.handlerFunction]? token
+      # call handler if present
+      @_handler?.token? token
+      # handle my way
+      console.log 'Checking type: ', token.type
+      switch token.type
+        when LoginAckToken.type
+          if @state isnt TdsConstants.statesByName['LOGGING IN']
+            throw new Error 'Received login ack when not loggin in'
+          receivedLoginAck = true
+      # break
       if not @_tokenStream? then break
+    # fire login?
+    if receivedLoginAck
+      @state = TdsConstants.statesByName['LOGGED IN']
+      @_handler?.login?()
 
   _handlePacket: ->
     packet = null
+    @_stream.beginTransaction()
     try
       # grab packet
       header = Packet.retrieveHeader @_stream, @
@@ -142,9 +162,11 @@ class exports.TdsClient
       packet = @_getPacketFromType header.type
       # we stream token streams
       if packet instanceof TokenStreamPacket
+        if @logDebug then console.log 'Found token stream packet'
         @_tokenStream = packet
         @_tokenStreamRemainingLength = header.length - 8
       else
+        if @logDebug then console.log 'Found non token stream packet'
         # parse
         packet.fromBuffer @_stream, @
       # commit
@@ -161,10 +183,11 @@ class exports.TdsClient
     if @_tokenStream?
       @_handleToken()
     else
+      if @logDebug then console.log 'Buffer remaining: ', @_stream.getBuffer()
       # handle packet
       if packet instanceof PreLoginPacket
         @state = TdsConstants.statesByName['CONNECTED']
-        @_handler.connect? packet
+        @_handler?.connect? packet
       else 
         if @logError then console.error 'Unrecognized type: ' + packet.type
         throw new Error 'Unrecognized type: ' + packet.type
@@ -181,7 +204,8 @@ class exports.TdsClient
     @state = TdsConstants.statesByName['INITIAL']
     
   _sendPacket: (packet) ->
-    if @logDebug then console.log 'Sending packet: %s', packet.name
+    if @logDebug
+      console.log 'Sending packet: %s at state', packet.name, @state
     builder = new BufferBuilder()
     builder = packet.toBuffer new BufferBuilder(), @
     buff = builder.toBuffer()
