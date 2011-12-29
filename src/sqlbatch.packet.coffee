@@ -13,5 +13,6 @@ class exports.SqlBatchPacket extends Packet
     @sqlText ?= ''
     builder.appendUcs2String @sqlText
     txHeader = @buildTransactionDescriptorAllHeader 0, 1
-    @insertAllHeaders builder, context [txHeader]
+    @insertAllHeaders builder, context, [txHeader]
     @insertPacketHeader builder, context
+    return builder

@@ -7,8 +7,9 @@ class exports.EnvChangeToken extends Token
   @name: 'ENVCHANGE'
 
   constructor: ->
-  	@type = 0xE3
-  	@name = 'ENVCHANGE'
+    @type = 0xE3
+    @name = 'ENVCHANGE'
+    @handlerFunction = 'envchange'
 
   _readValue: (typedef, stream, context) ->
   	if not typedef?

@@ -8,6 +8,7 @@ class exports.LoginAckToken extends Token
   constructor: ->
     @type = 0xAD
     @name = 'LOGINACK'
+    @handlerFunction = 'loginack'
   
   fromBuffer: (stream, context) ->
     @length = stream.readUInt16LE()

@@ -1,7 +1,7 @@
 class exports.TestConstants
-  @logDebug: true
-  @logError: true
-  @host: '72.181.129.90'
+  @logDebug: false
+  @logError: false
+  @host: 'localhost'
   @port: 8081
   @userName: 'sa'
   @password: 'sapass'

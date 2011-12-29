@@ -60,6 +60,16 @@ class exports.BufferBuilder
     @_values.splice position, 0, type: 'uint16BE', value: int
     @
   
+  insertUInt16LE: (int, position) ->
+    @length += 2
+    @_values.splice position, 0, type: 'uint16LE', value: int
+    @
+  
+  insertUInt32LE: (int, position) ->
+    @length += 4
+    @_values.splice position, 0, type: 'uint32LE', value: int
+    @
+  
   toBuffer: ->
     buff = new Buffer @length
     offset = 0

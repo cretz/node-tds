@@ -8,4 +8,4 @@ class exports.InfoMessageToken extends MessageToken
   constructor: ->
     @type = 0xAB
     @name = 'INFO'
-    @error = true
+    @error = false

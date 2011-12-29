@@ -6,9 +6,6 @@ class Connection extends EventEmitter
 
   constructor: (@_options) ->
     @_client = new TdsClient
-      error: (error) ->
-        if @_currentStatement? then @_currentStatement.handler.error? error
-        else @handler.error? error
       message: (message) ->
         if @_currentStatement? then @_currentStatement.handler.message? message
         else @handler.message? message
@@ -22,28 +19,37 @@ class Connection extends EventEmitter
         @_currentStatement.row row
       colmetadata: (colmetadata) ->
         @_currentStatement.colmetadata colmetadata
+      done: (done) ->
+        @_currentStatement.done done
+
   
   connect: (cb) ->
+    throw new Error 'Not yet implemented'
 
   createStatement: (sql, params, handler) ->
-    new Statement @, sql, params, cb
+    new Statement @, sql, params, handler
 
   # TODO - build RPC call  
   createCall: (procName, params, handler) ->
+    throw new Error 'Not yet implemented'
 
   # TODO - build bulk load (prebuilds colmetadata and done, does insert bulk call)
   # look at these two links for direction:
   #   http://sourceforge.net/projects/jbcp/
   #   https://github.com/mono/mono/blob/master/mcs/class/System.Data/System.Data.SqlClient/SqlBulkCopy.cs
   prepareBulkLoad: (tableName, batchSize, columns, cb) ->
+    throw new Error 'Not yet implemented'
 
   # TODO - transactional stuff
 
   setAutoCommit: (@autoCommit, cb) ->
+    throw new Error 'Not yet implemented'
   
   commit: (cb) ->
+    throw new Error 'Not yet implemented'
 
-  rollback: (cb) ->  
+  rollback: (cb) ->
+    throw new Error 'Not yet implemented'
 
   end: ->
     @_client.end()
@@ -126,6 +132,20 @@ class Statement extends EventEmitter
 
   # TODO - send attention, ignore extra data until we receive notification of cancel
   cancel: ->
+    throw new Error 'Not yet implemented'
+
+  colmetadata: (colmetadata) ->
+    @columns = colmetadata.columns
+    if @handler? then @handler.metadata? @columns
+    else @emit 'metadata', @columns
+
+  row: (row) ->
+    if @handler? then @handler.row? row
+    else @emit 'row', row
+
+  done: (done) ->
+    if @handler? then @handler.done? done
+    else @emit 'done', done
 
   _formatDate: (date, includeDate, includeTime) ->
     str = ''

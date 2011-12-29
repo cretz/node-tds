@@ -2,10 +2,12 @@
 
 {BufferBuilder} = require './buffer-builder'
 {BufferStream, StreamIndexOutOfBoundsError} = require './buffer-stream'
+{ColMetaDataToken} = require './colmetadata.token'
 {Login7Packet} = require './login7.packet'
 {LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
 {PreLoginPacket} = require './prelogin.packet'
+{SqlBatchPacket} = require './sqlbatch.packet'
 {TdsConstants} = require './tds-constants'
 {TokenStreamPacket} = require './tokenstream.packet'
 
@@ -68,7 +70,7 @@ class exports.TdsClient
       # send
       @_sendPacket sqlBatch
     catch err
-      if @logError then console.error 'Error executing: ', err
+      if @logError then console.error 'Error executing: ', err.stack
       @_handler?.error? err
       
   _socketConnect: =>
@@ -137,14 +139,16 @@ class exports.TdsClient
       if @_tokenStreamRemainingLength is 0
         @_tokenStream = @_tokenStreamRemainingLength = null
       # call handler if present
-      @_handler?.token? token
+      @_handler?[token.handlerFunction]? token
       # handle my way
-      console.log 'Checking type: ', token.type
+      if @logDebug then console.log 'Checking token type: ', token.type
       switch token.type
         when LoginAckToken.type
           if @state isnt TdsConstants.statesByName['LOGGING IN']
             throw new Error 'Received login ack when not loggin in'
           receivedLoginAck = true
+        when ColMetaDataToken.type
+          @columns = token.columns
       # break
       if not @_tokenStream? then break
     # fire login?

@@ -5,6 +5,7 @@
 {InfoMessageToken} = require './info.message.token'
 {LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
+{RowToken} = require './row.token'
 
 class exports.TokenStreamPacket extends Packet
 
@@ -14,7 +15,6 @@ class exports.TokenStreamPacket extends Packet
   constructor: ->
   	@type = 0x04
   	@name = 'TokenStream'
-  	@tokens = []
 
   _getTokenFromType: (type) ->
   	switch type
@@ -24,6 +24,7 @@ class exports.TokenStreamPacket extends Packet
       when ErrorMessageToken.type then new ErrorMessageToken
       when InfoMessageToken.type then new InfoMessageToken
       when LoginAckToken.type then new LoginAckToken
+      when RowToken.type then new RowToken
       else throw new Error 'Unrecognized type: ' + type 
 
   nextToken: (stream, context) ->

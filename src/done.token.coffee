@@ -9,6 +9,7 @@ class exports.DoneToken extends Token
   constructor: ->
     @type = 0xFD
     @name = 'DONE'
+    @handlerFunction = 'done'
   
   fromBuffer: (stream, context) ->
     @status = stream.readUInt16LE()

@@ -36,5 +36,5 @@ task 'compile', 'compile JS', ->
 task 'test', 'test node-tds', ->
   invoke 'clean'
   compile false, ->
-    run 'node', ['node_modules/mocha/bin/_mocha', '-t', '100s', '-R', 'spec', '--ignore-leaks'], 
+    run 'node', ['node_modules/mocha/bin/_mocha', '-t', '100s', '-R', 'spec', '--ignore-leaks', 'test/tds-client.sqlbatch.test.coffee'], 
       -> 'Tests complete'

@@ -41,9 +41,11 @@ class exports.Packet
   
   insertAllHeaders: (builder, context, headers) ->
     offset = 0
+    length = 0
     for header in headers
       switch header.type
         when 2
+          length += 12
           builder.insertUInt32LE 12, offset
           offset += 4
           builder.insertUInt16LE header.type, offset
@@ -55,9 +57,7 @@ class exports.Packet
           builder.insertUInt32LE header.outstandingRequestCount, offset
           offset += 4
         else throw new Error 'Unsupported all header type ' + header.type
-    builder.insertUInt32LE builder.length, 0
-    # return
-    builder
+    builder.insertUInt32LE length + 4, 0
 
   toString: ->
     ret = ''
