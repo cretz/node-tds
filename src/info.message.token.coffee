@@ -9,3 +9,4 @@ class exports.InfoMessageToken extends MessageToken
     @type = 0xAB
     @name = 'INFO'
     @error = false
+    @handlerFunction = 'message'

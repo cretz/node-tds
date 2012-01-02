@@ -2,9 +2,6 @@
 {Token} = require './token'
 
 class exports.MessageToken extends Token
-
-  constructor: ->
-    @handlerFunction = 'message'
   
   fromBuffer: (stream, context) ->
     # assert length

@@ -37,11 +37,17 @@ class exports.ColMetaDataToken extends Token
           column.length = column.scale = stream.readByte()
         else 
           switch column.type.lengthType
-            when 'int32LE' then column.length = stream.readInt32LE()
-            when 'uint16LE' then column.length = stream.readUInt16LE()
-            else column.length = stream.readByte()
-        if column.type.lengthSubstitute?
-          column.type = TdsConstants.dataTypesByType[column.type.lengthSubstitute[column.length]]
+            when 'int32LE' 
+              column.length = stream.readInt32LE()
+              column.lengthType = 'int32LE'
+            when 'uint16LE'
+              column.length = stream.readUInt16LE()
+              column.lengthType = 'uint16LE'
+            else 
+              column.length = stream.readByte()
+              column.lengthType = 'uint8'
+        if column.type.lengthSubstitutes?
+          column.type = TdsConstants.dataTypesByType[column.type.lengthSubstitutes[column.length]]
           if not column.type? then throw new Error 'Unable to find length substitute ' + column.length
         if column.type.hasCollation
           column.collation = stream.readBytes 5
@@ -58,3 +64,9 @@ class exports.ColMetaDataToken extends Token
       # colName
       column.name = stream.readUcs2String stream.readByte()
       @columnsByName[column.name] = column
+
+  getColumn: (column) ->
+    if typeof column is 'string'
+      @columnsByName[column]
+    else
+      @columns[column]

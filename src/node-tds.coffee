@@ -1,4 +1,4 @@
-{EventEmitter} = require './events'
+{EventEmitter} = require 'events'
 
 {TdsClient} = require './tds-client'
 {TdsUtils} = require './tds-utils'
@@ -7,33 +7,39 @@ class exports.Connection extends EventEmitter
 
   constructor: (@_options) ->
     @_client = new TdsClient
-      message: (message) ->
+      message: (message) =>
         # turn errors into actual errors
         if message.error
           err = new TdsError message.text, message
-          if @_currentStatement? then @_currentStatement.error err
+          if @_currentStatement? then @_currentStatement._error err
           else if @handler? then @handler.error? err
           else @emit 'error', err
-        else if @_currentStatement? then @_currentStatement.message message
+        else if @_currentStatement? then @_currentStatement._message message
         else if @handler? then @handler.message? message
         else @emit 'message', message
-      connect: (connect) ->
+      connect: (connect) =>
         @_client.login @_options
-      login: (login) ->
+      login: (login) =>
         cb = @_pendingLoginCallback
         @_pendingLoginCallback = null
         cb?()
-      row: (row) ->
-        @_currentStatement.row row
-      colmetadata: (colmetadata) ->
-        @_currentStatement.colmetadata colmetadata
-      done: (done) ->
-        @_currentStatement.done done
+      row: (row) =>
+        @_currentStatement._row row
+      colmetadata: (colmetadata) =>
+        @_currentStatement._colmetadata colmetadata
+      done: (done) =>
+        @_currentStatement?._done done
+    @_client.logError = @_options?.logError
+    @_client.logDebug = @_options?.logDebug
+    @__defineGetter__ 'isExecutingStatement', ->
+      @_currentStatement?
   
-  connect: (cb) ->
-    throw new Error 'Not yet implemented'
+  connect: (@_pendingLoginCallback) ->
+    @_client.connect @_options
 
   createStatement: (sql, params, handler) ->
+    if @isExecutingStatement then throw new Error 'Statement currently running'
+    if @_options.logDebug then console.log 'Creating statement: %s with params: ', sql, params
     new Statement @, sql, params, handler
 
   # TODO - build RPC call  
@@ -59,18 +65,17 @@ class exports.Connection extends EventEmitter
     throw new Error 'Not yet implemented'
 
   end: ->
+    @_currentStatement = null
     @_client.end()
 
-class Statement extends EventEmitter
+Statement = class exports.Statement extends EventEmitter
 
-  constructor: (@_connection, sql, @_params, @handler) ->
-    # simple SQL escaping, caller is expected to be smarter
-    @_sql = sql.replace "'", "''"
+  constructor: (@_connection, @_sql, @_params, @handler) ->
     if @_params?
       # build the parameter string
       parameterString = TdsUtils.buildParameterDefinition @_params
       if parameterString isnt ''
-        @_sql = "EXECUTE sp_executesql N'" + @_sql + "', N'" + parameterString + "'"
+        @_sql = "EXECUTE sp_executesql N'" + @_sql.replace("'", "''") + "', N'" + parameterString + "'"
 
   # TODO - determine whether sp_prepare/sp_execute is obsolete nowadays
   # prepare: (cb) ->
@@ -93,29 +98,32 @@ class Statement extends EventEmitter
   cancel: ->
     throw new Error 'Not yet implemented'
 
-  error: (err) ->
+  _error: (err) ->
     if @handler? then @handler.error? err
     else @emit 'error', err
 
-  message: (message) ->
+  _message: (message) ->
     if @handler? then @handler.message? message
     else @emit 'message', message
 
-  colmetadata: (colmetadata) ->
-    @columns = colmetadata.columns
-    if @handler? then @handler.metadata? @columns
-    else @emit 'metadata', @columns
+  _colmetadata: (colmetadata) ->
+    @metadata = colmetadata
+    if @handler? then @handler.metadata? @metadata
+    else @emit 'metadata', @metadata
 
-  row: (row) ->
+  _row: (row) ->
     if @handler? then @handler.row? row
     else @emit 'row', row
 
-  done: (done) ->
+  _done: (done) ->
+    if not done.hasMore
+      @_connection._currentStatement = null
     if @handler? then @handler.done? done
     else @emit 'done', done
 
-class exports.TdsError extends Error
+TdsError = class exports.TdsError extends Error
 
   constructor: (@message, @info) ->
+    @name = 'TdsError'
     @stack = (new Error).stack
 

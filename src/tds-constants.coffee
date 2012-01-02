@@ -70,6 +70,7 @@ class exports.TdsConstants
     0x25:
       name: 'VARBINARYTYPE'
       sqlType: 'VarBinary'
+      lengthType: 'uint16LE'
       legacy: true
     0x26:
       name: 'INTNTYPE'
@@ -81,6 +82,7 @@ class exports.TdsConstants
     0x27:
       name: 'VARCHARTYPE'
       sqlType: 'VarChar'
+      lengthType: 'uint16LE'
       legacy: true
     0x28:
       name: 'DATENTYPE'
@@ -101,10 +103,12 @@ class exports.TdsConstants
     0x2D:
       name: 'BINARYTYPE'
       sqlType: 'Binary'
+      lengthType: 'uint16LE'
       legacy: true
     0x2F:
       name: 'CHARTYPE'
       sqlType: 'Char'
+      lengthType: 'uint16LE'
       legacy: true
     0x30: 
       name: 'INT1TYPE'

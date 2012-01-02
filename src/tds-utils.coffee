@@ -1,9 +1,8 @@
-
 class exports.TdsUtils
   
   @buildParameterDefinition: (params, shouldAssert) ->
-  	parameterString = ''
-  	for key, value of params
+   parameterString = ''
+   for key, value of params
       if shouldAssert
         # simple sanity checks
         if typeof key isnt 'string' or typeof value.type isnt 'string'
@@ -52,7 +51,7 @@ class exports.TdsUtils
         when 'object'
           # TODO - support buffers here
           if value instanceof Date
-            paramSql += "'" + 
+            paramSql += "'" +
               TdsUtils.formatDate(value, not param.timeOnly, not param.dateOnly) + "'"
           else
             throw new Error 'Unsupported parameter type: ' + typeof value

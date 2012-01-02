@@ -148,8 +148,7 @@ class exports.TdsClient
             throw new Error 'Received login ack when not loggin in'
           receivedLoginAck = true
         when ColMetaDataToken.type
-          @columns = token.columns
-          @columnsByName = token.columnsByName
+          @colmetadata = token
       # break
       if not @_tokenStream? then break
     # fire login?
