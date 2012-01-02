@@ -149,6 +149,7 @@ class exports.TdsClient
           receivedLoginAck = true
         when ColMetaDataToken.type
           @columns = token.columns
+          @columnsByName = token.columnsByName
       # break
       if not @_tokenStream? then break
     # fire login?

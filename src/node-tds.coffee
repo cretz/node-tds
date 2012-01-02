@@ -1,14 +1,22 @@
 {EventEmitter} = require './events'
 
 {TdsClient} = require './tds-client'
+{TdsUtils} = require './tds-utils'
 
-class Connection extends EventEmitter
+class exports.Connection extends EventEmitter
 
   constructor: (@_options) ->
     @_client = new TdsClient
       message: (message) ->
-        if @_currentStatement? then @_currentStatement.handler.message? message
-        else @handler.message? message
+        # turn errors into actual errors
+        if message.error
+          err = new TdsError message.text, message
+          if @_currentStatement? then @_currentStatement.error err
+          else if @handler? then @handler.error? err
+          else @emit 'error', err
+        else if @_currentStatement? then @_currentStatement.message message
+        else if @handler? then @handler.message? message
+        else @emit 'message', message
       connect: (connect) ->
         @_client.login @_options
       login: (login) ->
@@ -21,7 +29,6 @@ class Connection extends EventEmitter
         @_currentStatement.colmetadata colmetadata
       done: (done) ->
         @_currentStatement.done done
-
   
   connect: (cb) ->
     throw new Error 'Not yet implemented'
@@ -61,34 +68,9 @@ class Statement extends EventEmitter
     @_sql = sql.replace "'", "''"
     if @_params?
       # build the parameter string
-      parameterString = ''
-      for key, value of @_params
-        # simple sanity checks
-        if typeof key isnt 'string' or typeof value.type isnt 'string'
-          throw new Error 'Unexpected param name or type name'
-        if value.size? and typeof value.size isnt 'number'
-          throw new Error 'Unexpected type for value size'
-        if value.scale? and typeof value.scale isnt 'number'
-          throw new Error 'Unexpected type for value scale'
-        if value.precision? and typeof value.precision isnt 'number'
-          throw new Error 'Unexpected type for value precision'
-        if key.indexOf ',' isnt -1 or value.indexOf ',' isnt -1
-          throw new Error 'Cannot have comma in parameter list'
-        if key.indexOf '@' isnt -1 or value.indexOf '@' isnt -1
-          throw new Error 'Cannot have at sign (@) in parameter list'
-        if key.indexOf ' ' isnt -1 or value.indexOf ' ' isnt -1
-          throw new Error 'Cannot have space in parameter list'
-        if key.indexOf "'" isnt -1 or value.indexOf "'" isnt -1
-          throw new Error 'Cannot have apostrophe in parameter list'
-        if parameterString isnt ''
-          parameterString += ','
-        # append
-        parameterString += '@' + key + ' ' + value.type
-        if value.size? then parameterString += '(' + value.size + ')'
-        else if value.scale? and value.precision?
-          parameterString += '(' + value.precision + ',' + value.scale + ')'
-        if value.output then parameterString += ' OUTPUT'
-      @_sql = "EXECUTE sp_executesql N'" + @_sql + "', N'" + parameterString + "'"
+      parameterString = TdsUtils.buildParameterDefinition @_params
+      if parameterString isnt ''
+        @_sql = "EXECUTE sp_executesql N'" + @_sql + "', N'" + parameterString + "'"
 
   # TODO - determine whether sp_prepare/sp_execute is obsolete nowadays
   # prepare: (cb) ->
@@ -101,30 +83,7 @@ class Statement extends EventEmitter
     else
       # TODO - support batch
       # create actual params
-      paramSql = ''
-      for key, value of paramValues
-        param = @_params[key]
-        if not param?
-          throw new Error 'Undefined parameter ' + key
-        if paramSql isnt '' then paramSql += ', '
-        paramSql += '@' + key + ' = '
-        switch typeof value
-          when 'string'
-            paramSql += "N'" + value.replace "'", "''"
-          when 'number'
-            paramSql += value
-          when 'boolean'
-            paramSql += if value then 1 else 0
-          when 'null'
-            paramSql += 'NULL'
-          when 'object'
-            # TODO - support buffers here
-            if value instanceof Date
-              paramSql += "'" + 
-                @_formatDate(value, not param.timeOnly, not param.dateOnly) + "'"
-            else
-              throw new Error 'Unsupported parameter type: ' + typeof value
-          else throw new Error 'Unsupported parameter type: ' + typeof value
+      paramSql = TdsUtils.buildParameterSql @_params, paramValues
       if paramSql isnt ''
         @_connection._client.sqlBatch @_sql + ', ' + paramSql
       else
@@ -133,6 +92,14 @@ class Statement extends EventEmitter
   # TODO - send attention, ignore extra data until we receive notification of cancel
   cancel: ->
     throw new Error 'Not yet implemented'
+
+  error: (err) ->
+    if @handler? then @handler.error? err
+    else @emit 'error', err
+
+  message: (message) ->
+    if @handler? then @handler.message? message
+    else @emit 'message', message
 
   colmetadata: (colmetadata) ->
     @columns = colmetadata.columns
@@ -147,28 +114,8 @@ class Statement extends EventEmitter
     if @handler? then @handler.done? done
     else @emit 'done', done
 
-  _formatDate: (date, includeDate, includeTime) ->
-    str = ''
-    if includeDate
-      # datetime2 can start at 0001
-      str += '0' if date.getFullYear() < 1000
-      str += '0' if date.getFullYear() < 100
-      str += '0' if date.getFullYear() < 10
-      str += date.getFullYear() + '-'
-      str += '0' if date.getMonth() < 10
-      str += date.getMonth() + '-'
-      str += '0' if date.getDate() < 10
-      str += date.getDate()
-    if includeTime
-      str += ' ' if str isnt ''
-      str += '0' if date.getHours() < 10
-      str += date.getHours() + ':'
-      str += '0' if date.getMinutes() < 10
-      str += date.getMinutes() + ':'
-      str += '0' if date.getSeconds() < 10
-      str += date.getSeconds() + '.'
-      str += '0' if date.getMilliseconds() < 100
-      str += '0' if date.getMilliseconds() < 10
-      str += date.getMilliseconds()
+class exports.TdsError extends Error
 
+  constructor: (@message, @info) ->
+    @stack = (new Error).stack
 

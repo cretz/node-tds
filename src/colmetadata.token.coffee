@@ -14,8 +14,10 @@ class exports.ColMetaDataToken extends Token
   fromBuffer: (stream, context) ->
     len = stream.readUInt16LE()
     @columns = new Array len
+    @columnsByName = {}
     if len isnt 0xFFFF then for i in [0..len - 1]
       @columns[i] = column = 
+        index: i
         # userType
         userType: stream.readUInt16LE()
         # flags
@@ -48,9 +50,11 @@ class exports.ColMetaDataToken extends Token
           column.precision = stream.readByte()
       else
         column.length = column.type.length
+      # null?
+      if column.length is 0xFFFF then column.length = -1
       # tableName
       if column.type.hasTableName
         column.tableName = stream.readUcs2String stream.readUInt16LE()
       # colName
       column.name = stream.readUcs2String stream.readByte()
-      
+      @columnsByName[column.name] = column
