@@ -107,33 +107,72 @@ Statement = class exports.Statement extends EventEmitter
   constructor: (@_connection, @_sql, @_params, @handler) ->
     if @_params?
       # build the parameter string
-      parameterString = TdsUtils.buildParameterDefinition @_params
-      if parameterString isnt ''
-        @_sql = "EXECUTE sp_executesql \nN'" + @_sql.replace(/'/g, "''") + "\n', N'" + parameterString + "'"
+      @_parameterString = TdsUtils.buildParameterDefinition @_params
 
-  # TODO - determine whether sp_prepare/sp_execute is obsolete nowadays
-  # prepare: (cb) ->
+  prepare: (cb) ->
+    if @_preparedHandle?
+      throw new Error 'Statement already prepared'
+    if not @_parameterString? or @_parameterString is ''
+      # just tossing this here for best practices
+      throw new Error 'Cannot prepare statement without parameters'
+    if @_connection._currentStatement?
+      throw new Error 'Another statement already executing'
+    @_connection._currentStatement = @
+    sql = "DECLARE @hndl Int;\nEXECUTE sp_prepare @hndl OUTPUT, N'" +
+      @_parameterString + "',\nN'" + @_sql.replace(/'/g, "''") + 
+      "\n', 1;\nSELECT @hndl;"
+    @_pendingPrepareCallback = cb
+    @_connection._client.sqlBatch sql
+
+  unprepare: (cb) ->
+    if not @_preparedHandle?
+      throw new Error 'Statement not prepared'
+    if @_connection._currentStatement?
+      throw new Error 'Another statement already executing'
+    @_connection._currentStatement = @
+    @_pendingUnprepareCallback = cb
+    @_connection._client.sqlBatch 'sp_unprepare ' + @_preparedHandle
   
   execute: (paramValues) =>
     if @_connection._currentStatement?
       throw new Error 'Another statement already executing'
     @_connection._currentStatement = @
+    sql = null
     # regular?
-    if not @_params?
-      @_connection._client.sqlBatch @_sql
+    if not @_params? or @_parameterString is ''
+      sql = @_sql
+    else if @_preparedHandle?
+      sql = 'EXECUTE sp_execute ' + @_preparedHandle + ', ' +
+        TdsUtils.buildParameterizedSql @_params, paramValues
     else
-      # TODO - support batch
-      # create actual params
-      sql = TdsUtils.buildParameterizedSql @_sql, @_params, paramValues
-      @_connection._client.sqlBatch sql
+      if not @_parameterizedSql?
+        @_parameterizedSql = "EXECUTE sp_executesql \nN'" + 
+          @_sql.replace(/'/g, "''") + "\n', N'" + @_parameterString + "'"
+      sql = @_parameterizedSql + ', ' +
+        TdsUtils.buildParameterizedSql @_params, paramValues
+    @_connection._client.sqlBatch sql
 
   # TODO - send attention, ignore extra data until we receive notification of cancel
   cancel: =>
+    if @_pendingPrepareCallback? or @_pendingUnprepareCallback?
+      throw new Error 'Unable to cancel (un)prepare'
     @_cancelling = true
     @_connection._client.cancel()
 
   _error: (err) =>
-    if @handler? then @handler.error? err
+    if @_pendingPrepareCallback?
+      cb = @_pendingPrepareCallback
+      @_pendingPrepareCallback = null
+      @_connection.currentStatement = null
+      cb err
+      @_ignoreNextDone = true
+    else if @_pendingUnprepareCallback?
+      cb = @_pendingUnprepareCallback
+      @_pendingUnprepareCallback = null
+      @_connection.currentStatement = null
+      cb err
+      @_ignoreNextDone = true
+    else if @handler? then @handler.error? err
     else @emit 'error', err
 
   _message: (message) =>
@@ -141,25 +180,39 @@ Statement = class exports.Statement extends EventEmitter
     else @emit 'message', message
 
   _colmetadata: (colmetadata) =>
-    if not @_cancelling
+    if not @_cancelling and not @_pendingPrepareCallback? and not @_pendingUnprepareCallback?
       @metadata = colmetadata
       if @handler? then @handler.metadata? @metadata
       else @emit 'metadata', @metadata
 
   _row: (row) =>
-    if not @_cancelling
+    if @_pendingPrepareCallback?
+      @_preparedHandle = row.getValue 0
+    else if not @_cancelling
       if @handler? then @handler.row? row
       else @emit 'row', row
 
   _done: (done) =>
-    if @_cancelling
-      # TODO figure out why status doesn't show cancel
-      @_cancelling = undefined
+    if @_ignoreNextDone
+      @_ignoreNextDone = undefined
+    else if @_pendingPrepareCallback?
+      cb = @_pendingPrepareCallback
+      @_pendingPrepareCallback = null
       @_connection._currentStatement = null
-    else if not done.hasMore
+      cb()
+    else if @_pendingUnprepareCallback?
+      cb = @_pendingUnprepareCallback
+      @_pendingUnprepareCallback = null
+      @_preparedHandle = undefined
       @_connection._currentStatement = null
-    if @handler? then @handler.done? done
-    else @emit 'done', done
+      cb()
+    else 
+      if @_cancelling
+        # TODO figure out why status doesn't show cancel
+        @_cancelling = undefined
+      @_connection._currentStatement = null
+      if @handler? then @handler.done? done
+      else @emit 'done', done
 
 TdsError = class exports.TdsError extends Error
 

@@ -37,8 +37,8 @@ describe 'Statement', ->
              CAST(@VarCharValue AS VarChar(7)) AS VarCharType,
              CAST(@NCharValue AS NChar(5)) AS NCharType,
              CAST(@NVarCharValue AS NVarChar(8)) AS NVarCharType,
-             -- CAST(@BinaryValue AS Binary(1)) AS BinaryType,
-             -- CAST(@VarBinaryValue AS VarBinary(1)) AS VarBinaryType,
+             CAST(@BinaryValue AS Binary(2)) AS BinaryType,
+             CAST(@VarBinaryValue AS VarBinary(2)) AS VarBinaryType,
              CAST(@RealValue AS Real) AS RealType,
              CAST(@FloatValue AS Float) AS FloatType,
              -- TODO CAST('stuffhere' AS UniqueIdentifier) AS UniqueIdentifierType,
@@ -60,9 +60,8 @@ describe 'Statement', ->
     params.VarCharValue = type: 'VarChar', size: 7
     params.NCharValue = type: 'NChar', size: 5
     params.NVarCharValue = type: 'NVarChar', size: 8
-    # TODO fix me
-    # params.BinaryValue = type: 'Binary', size: 2
-    # params.VarBinaryValue = type: 'VarBinary', size: 2
+    params.BinaryValue = type: 'Binary', size: 2
+    params.VarBinaryValue = type: 'VarBinary', size: 2
     params.RealValue = type: 'Real'
     params.FloatValue = type: 'Float'
     params.SmallDateTimeValue = type: 'SmallDateTime'
@@ -79,8 +78,8 @@ describe 'Statement', ->
         VarCharValue: null
         NCharValue: null
         NVarCharValue: null
-        # BinaryValue: null
-        # VarBinaryValue: null
+        BinaryValue: null
+        VarBinaryValue: null
         RealValue: null
         FloatValue: null
         SmallDateTimeValue: null
@@ -103,8 +102,8 @@ describe 'Statement', ->
         checkNull 'VarCharType'
         checkNull 'NCharType'
         checkNull 'NVarCharType'
-        # checkNull 'BinaryType'
-        # checkNull 'VarBinaryType'
+        checkNull 'BinaryType'
+        checkNull 'VarBinaryType'
         checkNull 'RealType'
         checkNull 'FloatType'
         checkNull 'SmallDateTimeType'
@@ -132,8 +131,8 @@ describe 'Statement', ->
         VarCharValue: 'VarChar'
         NCharValue: 'NChar'
         NVarCharValue: 'NVarChar'
-        # BinaryValue: new Buffer [0x06, 0x06]
-        # VarBinaryValue: new Buffer [0x07, 0x07]
+        BinaryValue: new Buffer [0x06, 0x06]
+        VarBinaryValue: new Buffer [0x07, 0x07]
         RealValue: 8.1
         FloatValue: 9.1
         SmallDateTimeValue: new Date 2012, 0, 1
@@ -153,8 +152,8 @@ describe 'Statement', ->
         TestUtils.assertRow row, 'VarCharType', paramValues.VarCharValue
         TestUtils.assertRow row, 'NCharType', paramValues.NCharValue
         TestUtils.assertRow row, 'NVarCharType', paramValues.NVarCharValue
-        # TestUtils.assertRow row, 'BinaryType', paramValues.BinaryValue
-        # TestUtils.assertRow row, 'VarBinaryType', paramValues.VarBinaryValue
+        TestUtils.assertRow row, 'BinaryType', paramValues.BinaryValue
+        TestUtils.assertRow row, 'VarBinaryType', paramValues.VarBinaryValue
         TestUtils.assertRow row, 'RealType', paramValues.RealValue
         TestUtils.assertRow row, 'FloatType', paramValues.FloatValue
         TestUtils.assertRow row, 'SmallDateTimeType', paramValues.SmallDateTimeValue

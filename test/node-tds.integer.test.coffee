@@ -19,7 +19,7 @@ describe 'Statement', ->
           TestUtils.assertRow row, 1, -1
           TestUtils.assertRow row, 2, '-1'
         done: (done) ->
-          if not done.hasMore then alldone()  
+          alldone()  
       conn.handler = handler
       sql = 
         '''
