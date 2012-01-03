@@ -31,7 +31,7 @@ class exports.TdsUtils
       if value.output then parameterString += ' OUTPUT'
     parameterString
     
-  @buildParameterSql: (params, paramValues) ->
+  @buildParameterizedSql: (sql, params, paramValues) ->
     paramSql = ''
     for key, value of paramValues
       param = params[key]
@@ -41,22 +41,33 @@ class exports.TdsUtils
       paramSql += '@' + key + ' = '
       switch typeof value
         when 'string'
-          paramSql += "N'" + value.replace "'", "''"
+          paramSql += "N'" + value.replace(/'/g, "''") + "'"
         when 'number'
           paramSql += value
         when 'boolean'
           paramSql += if value then 1 else 0
-        when 'null'
-          paramSql += 'NULL'
         when 'object'
-          # TODO - support buffers here
-          if value instanceof Date
+          if not value?
+            paramSql += 'NULL'
+          else if value instanceof Date
             paramSql += "'" +
               TdsUtils.formatDate(value, not param.timeOnly, not param.dateOnly) + "'"
+          else if Buffer.isBuffer value
+            # TODO fix this, client just hangs (but works when hand-executing)
+            # (may need do buffer.length * 2)
+            throw new Error 'Buffers not yet supported'
+            if param.type.toUpperCase() isnt 'BINARY' and param.type.toUpperCase() isnt 'VARBINARY'
+              throw new Error 'Must use BINARY or VARBINARY for buffer parameters'
+            sql = 'DECLARE @__temp__' + key + ' ' + param.type + '(' +
+              value.length + '); SET @__temp__' + key + ' = CONVERT(' + param.type +
+              '(' + value.length + "), N'" + value.toString('ucs2').replace(/'/g, "''") + 
+              "'); " + sql
+            paramSql += '@__temp__' + key
           else
             throw new Error 'Unsupported parameter type: ' + typeof value
         else throw new Error 'Unsupported parameter type: ' + typeof value
-    paramSql
+    if paramSql is '' then sql
+    else sql + ', ' + paramSql
 
   @formatDate: (date, includeDate, includeTime) ->
     str = ''
@@ -66,8 +77,8 @@ class exports.TdsUtils
       str += '0' if date.getFullYear() < 100
       str += '0' if date.getFullYear() < 10
       str += date.getFullYear() + '-'
-      str += '0' if date.getMonth() < 10
-      str += date.getMonth() + '-'
+      str += '0' if date.getMonth() < 9
+      str += (date.getMonth() + 1) + '-'
       str += '0' if date.getDate() < 10
       str += date.getDate()
     if includeTime

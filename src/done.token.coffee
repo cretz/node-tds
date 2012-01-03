@@ -4,6 +4,8 @@
 class exports.DoneToken extends Token
   
   @type: 0xFD
+  @type2: 0xFF #DONEINPROC
+  @type3: 0xFE #DONEPROC
   @name: 'DONE'
   
   constructor: ->
@@ -16,6 +18,9 @@ class exports.DoneToken extends Token
       @status & 0x0002
     @__defineGetter__ 'hasRowCount', ->
       @status & 0x0010
+    # meh, spell it both ways, why not
+    @__defineGetter__ 'isCanceled', ->
+      @status & 0x0020
     @__defineGetter__ 'isCancelled', ->
       @status & 0x0020
     @__defineGetter__ 'isFatal', ->

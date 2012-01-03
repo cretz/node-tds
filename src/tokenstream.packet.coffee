@@ -5,6 +5,7 @@
 {InfoMessageToken} = require './info.message.token'
 {LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
+{ReturnStatusToken} = require './returnstatus.token'
 {RowToken} = require './row.token'
 
 class exports.TokenStreamPacket extends Packet
@@ -19,11 +20,12 @@ class exports.TokenStreamPacket extends Packet
   _getTokenFromType: (type) ->
   	switch type
       when ColMetaDataToken.type then new ColMetaDataToken
-      when DoneToken.type then new DoneToken
+      when DoneToken.type, DoneToken.type2, DoneToken.type3 then new DoneToken
       when EnvChangeToken.type then new EnvChangeToken
       when ErrorMessageToken.type then new ErrorMessageToken
       when InfoMessageToken.type then new InfoMessageToken
       when LoginAckToken.type then new LoginAckToken
+      when ReturnStatusToken.type then new ReturnStatusToken
       when RowToken.type then new RowToken
       else throw new Error 'Unrecognized type: ' + type 
 

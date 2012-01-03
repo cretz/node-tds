@@ -1,3 +1,12 @@
-Things that will not be in initial version:
+Things to do:
 
 * NTLM SSO auth with current user using C++ add on inspired by ntlmauth.dll from jTDS
+** would love to use node-ffi here once Windows support is complete
+* Make bigints into strings and allow user to decide what to do w/ them (e.g. node-bigint)
+* Fix parameterized binary pieces from buffer (hangs statement right now)
+* Prepared statements
+* SQL bulk load
+* TDS server impl too?
+* Query cancellation support
+* Transaction support
+* Multiple result set test

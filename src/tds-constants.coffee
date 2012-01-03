@@ -58,12 +58,14 @@ class exports.TdsConstants
       sqlType: 'Image'
       lengthType: 'int32LE'
       hasTableName: true
+      emptyPossible: true
     0x23:
       name: 'TEXTTYPE'
       sqlType: 'Text'
       lengthType: 'int32LE'
       hasCollation: true
       hasTableName: true
+      emptyPossible: true
     0x24:
       name: 'GUIDTYPE'
       sqlType: 'UniqueIndentifier'
@@ -72,6 +74,7 @@ class exports.TdsConstants
       sqlType: 'VarBinary'
       lengthType: 'uint16LE'
       legacy: true
+      emptyPossible: true
     0x26:
       name: 'INTNTYPE'
       lengthSubstitutes: 
@@ -84,6 +87,7 @@ class exports.TdsConstants
       sqlType: 'VarChar'
       lengthType: 'uint16LE'
       legacy: true
+      emptyPossible: true
     0x28:
       name: 'DATENTYPE'
       sqlType: 'Date'
@@ -105,11 +109,13 @@ class exports.TdsConstants
       sqlType: 'Binary'
       lengthType: 'uint16LE'
       legacy: true
+      emptyPossible: true
     0x2F:
       name: 'CHARTYPE'
       sqlType: 'Char'
       lengthType: 'uint16LE'
       legacy: true
+      emptyPossible: true
     0x30: 
       name: 'INT1TYPE'
       sqlType: 'TinyInt'
@@ -166,6 +172,7 @@ class exports.TdsConstants
       lengthType: 'int32LE'
       hasCollation: true
       hasTableName: true
+      emptyPossible: true
     0x68:
       name: 'BITNTYPE'
       lengthSubstitutes:
@@ -206,30 +213,36 @@ class exports.TdsConstants
       name: 'BIGVARBINTYPE'
       sqlType: 'VarBinary'
       lengthType: 'uint16LE'
+      emptyPossible: true
     0xA7:
       name: 'BIGVARCHRTYPE'
       sqlType: 'VarChar'
       lengthType: 'uint16LE'
+      emptyPossible: true
       hasCollation: true
     0xAD:
       name: 'BIGBINARYTYPE'
       sqlType: 'Binary'
       lengthType: 'uint16LE'
+      emptyPossible: true
     0xAF:
       name: 'BIGCHARTYPE'
       sqlType: 'Char'
       lengthType: 'uint16LE'
       hasCollation: true
+      emptyPossible: true
     0xE7:
       name: 'NVARCHARTYPE'
       sqlType: 'NVarChar'
       lengthType: 'uint16LE'
       hasCollation: true
+      emptyPossible: true
     0xEF:
       name: 'NCHARTYPE'
       sqlType: 'NChar'
       lengthType: 'uint16LE'
       hasCollation: true
+      emptyPossible: true
     0xF0:
       name: 'UDTTYPE'
       sqlType: 'CLR-UDT'

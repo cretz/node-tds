@@ -23,8 +23,16 @@ class exports.RowToken extends Token
         when 'uint8' then val.length = stream.readByte()
         else val.length = column.length
       if val.length is 0xFFFF then val.length = -1
-      val.buffer = stream.readBuffer column.length
+      if val.length is 0 and column.type.emptyPossible
+        val.buffer = new Buffer 0
+      else if val.length > 0
+        val.buffer = stream.readBuffer val.length
       @values[++index] = val
+
+  isNull: (column) ->
+    col = @metadata.getColumn column
+    if not col? then throw new Error 'Column ' + column + ' not found'
+    @values[col.index].length
 
   getValueLength: (column) ->
     col = @metadata.getColumn column

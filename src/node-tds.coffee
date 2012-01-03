@@ -75,7 +75,7 @@ Statement = class exports.Statement extends EventEmitter
       # build the parameter string
       parameterString = TdsUtils.buildParameterDefinition @_params
       if parameterString isnt ''
-        @_sql = "EXECUTE sp_executesql N'" + @_sql.replace("'", "''") + "', N'" + parameterString + "'"
+        @_sql = "EXECUTE sp_executesql \nN'" + @_sql.replace(/'/g, "''") + "\n', N'" + parameterString + "'"
 
   # TODO - determine whether sp_prepare/sp_execute is obsolete nowadays
   # prepare: (cb) ->
@@ -88,11 +88,8 @@ Statement = class exports.Statement extends EventEmitter
     else
       # TODO - support batch
       # create actual params
-      paramSql = TdsUtils.buildParameterSql @_params, paramValues
-      if paramSql isnt ''
-        @_connection._client.sqlBatch @_sql + ', ' + paramSql
-      else
-        @_connection._client.sqlBatch @_sql
+      sql = TdsUtils.buildParameterizedSql @_sql, @_params, paramValues
+      @_connection._client.sqlBatch sql
 
   # TODO - send attention, ignore extra data until we receive notification of cancel
   cancel: ->
