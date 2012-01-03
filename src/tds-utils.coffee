@@ -41,7 +41,11 @@ class exports.TdsUtils
       paramSql += '@' + key + ' = '
       switch typeof value
         when 'string'
-          paramSql += "N'" + value.replace(/'/g, "''") + "'"
+          # bigints are special
+          if param.type.toUpperCase() is 'BIGINT'
+            # no need to sanity check, SQL server should break; trusting caller
+            paramSql += value
+          else paramSql += "N'" + value.replace(/'/g, "''") + "'"
         when 'number'
           paramSql += value
         when 'boolean'
@@ -94,4 +98,34 @@ class exports.TdsUtils
       str += date.getMilliseconds()
 
   @bigIntBufferToString: (buffer) ->
-    throw new Error 'Unimplemented'
+    # TODO: optimize to 8 bytes
+    # thanks to https://github.com/pekim/tedious/pull/2
+    arr = Array.prototype.slice.call buffer, 0, buffer.length
+    isZero = (array) ->
+      for byte in array
+        if byte != 0 then return false
+      true
+    if isZero arr then return '0'
+    nextRemainder = (array) ->
+      remainder = 0
+      for index in [array.length - 1..0] by -1
+        s = (remainder * 256) + array[index]
+        array[index] = Math.floor s / 10
+        remainder = s % 10
+      remainder
+    invert = (array) ->
+      for byte, index in array
+        array[index] = array[index] ^ 0xFF
+      for byte, index in array
+        array[index] = array[index] + 1
+        if array[index] > 255 then array[index] = 0
+        else break
+    if arr[arr.length - 1] & 0x80
+      sign = '-'
+      invert arr
+    else sign = ''
+    result = ''
+    until isZero arr
+      t = nextRemainder arr
+      result = t + result
+    sign + result

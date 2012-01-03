@@ -1,8 +1,10 @@
 {Socket} = require 'net'
 
+{AttentionPacket} = require './attention.packet'
 {BufferBuilder} = require './buffer-builder'
 {BufferStream, StreamIndexOutOfBoundsError} = require './buffer-stream'
 {ColMetaDataToken} = require './colmetadata.token'
+{DoneToken} = require './done.token'
 {Login7Packet} = require './login7.packet'
 {LoginAckToken} = require './loginack.token'
 {Packet} = require './packet'
@@ -72,6 +74,18 @@ class exports.TdsClient
     catch err
       if @logError then console.error 'Error executing: ', err.stack
       @_handler?.error? err
+
+  cancel: ->
+    if @state isnt TdsConstants.statesByName['LOGGED IN']
+      throw new Error 'Client must be in LOGGED IN state before cancelling'
+    if @logDebug then console.log 'Cancelling'
+    try
+      @cancelling = true
+      @_sendPacket new AttentionPacket
+    catch err
+      @cancelling = undefined
+      if @logError then console.error 'Error cancelling: ', err.stack
+      @_handler?.error? err    
       
   _socketConnect: =>
     if @logDebug then console.log 'Connection established, pre-login commencing'
@@ -138,17 +152,19 @@ class exports.TdsClient
           throw err
       if @_tokenStreamRemainingLength is 0
         @_tokenStream = @_tokenStreamRemainingLength = null
-      # call handler if present
-      @_handler?[token.handlerFunction]? token
-      # handle my way
-      if @logDebug then console.log 'Checking token type: ', token.type
-      switch token.type
-        when LoginAckToken.type
-          if @state isnt TdsConstants.statesByName['LOGGING IN']
-            throw new Error 'Received login ack when not loggin in'
-          receivedLoginAck = true
-        when ColMetaDataToken.type
-          @colmetadata = token
+      if not @_cancelling or token.type is DoneToken.type
+        @_cancelling = undefined
+        # call handler if present
+        @_handler?[token.handlerFunction]? token
+        # handle my way
+        if @logDebug then console.log 'Checking token type: ', token.type
+        switch token.type
+          when LoginAckToken.type
+            if @state isnt TdsConstants.statesByName['LOGGING IN']
+              throw new Error 'Received login ack when not loggin in'
+            receivedLoginAck = true
+          when ColMetaDataToken.type
+            @colmetadata = token
       # break
       if not @_tokenStream? then break
     # fire login?

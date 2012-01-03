@@ -14,8 +14,7 @@ class exports.RowToken extends Token
   fromBuffer: (stream, context) ->
     @metadata = context.colmetadata
     @values = new Array(@metadata.columns.length)
-    index = -1
-    for column in @metadata.columns
+    for column, index in @metadata.columns
       val = {}
       switch column.lengthType
         when 'int32LE' then val.length = stream.readInt32LE()
@@ -27,7 +26,7 @@ class exports.RowToken extends Token
         val.buffer = new Buffer 0
       else if val.length > 0
         val.buffer = stream.readBuffer val.length
-      @values[++index] = val
+      @values[index] = val
 
   isNull: (column) ->
     col = @metadata.getColumn column
@@ -48,16 +47,16 @@ class exports.RowToken extends Token
         null
       when 'Bit', 'TinyInt'
         if val.length is 0 then null
-        else val.buffer.readUInt8 0
+        else val.buffer.readInt8 0
       when 'SmallInt'
         if val.length is 0 then null
-        else val.buffer.readUInt16LE 0
+        else val.buffer.readInt16LE 0
       when 'Int'
         if val.length is 0 then null
-        else val.buffer.readUInt32LE 0
+        else val.buffer.readInt32LE 0
       when 'BigInt'
         if val.length is 0 then null
-        else TdsUtils.bigIntBufferToString val
+        else TdsUtils.bigIntBufferToString val.buffer
       # TODO RowVersion/TimeStamp
       when 'Char', 'VarChar'
         if val.length is -1 then null

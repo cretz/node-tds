@@ -12,19 +12,19 @@ class exports.DoneToken extends Token
     @type = 0xFD
     @name = 'DONE'
     @handlerFunction = 'done'
-    @__defineGetter__ 'hasMore', ->
-      @status & 0x0001
-    @__defineGetter__ 'isError', ->
-      @status & 0x0002
-    @__defineGetter__ 'hasRowCount', ->
-      @status & 0x0010
+    @__defineGetter__ 'hasMore', =>
+      @status & 0x01 isnt 0
+    @__defineGetter__ 'isError', =>
+      @status & 0x02 isnt 0
+    @__defineGetter__ 'hasRowCount', =>
+      @status & 0x10 isnt 0
     # meh, spell it both ways, why not
-    @__defineGetter__ 'isCanceled', ->
-      @status & 0x0020
-    @__defineGetter__ 'isCancelled', ->
-      @status & 0x0020
-    @__defineGetter__ 'isFatal', ->
-      @status & 0x0100
+    @__defineGetter__ 'isCanceled', =>
+      @status & 0x20 isnt 0
+    @__defineGetter__ 'isCancelled', =>
+      @status & 0x20 isnt 0
+    @__defineGetter__ 'isFatal', =>
+      @status & 0x100 isnt 0
   
   fromBuffer: (stream, context) ->
     @status = stream.readUInt16LE()
