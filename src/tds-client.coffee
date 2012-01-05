@@ -13,6 +13,9 @@
 {TdsConstants} = require './tds-constants'
 {TokenStreamPacket} = require './tokenstream.packet'
 
+###*
+Low level client for TDS access
+###
 class exports.TdsClient
   
   constructor: (@_handler) ->

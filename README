@@ -1,11 +1,7 @@
-This is my playground to see how difficult writing a async friendly 
-node.js driver for SQL Server would be. Please don't use this project
-right now!
+node-tds is a client for Microsoft SQL Server databases.
 
-Features:
+Install:
+npm install tds
 
-* Parameterized statements
-* Prepared (server-side) statements
-* Full SQL Server 2005 data type support (including Binary and VarBinary)
-* Query cancellation
-* Transactions
+Website:
+http://cretz.github.com/node-tds

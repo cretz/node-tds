@@ -8,6 +8,11 @@
 {ReturnStatusToken} = require './returnstatus.token'
 {RowToken} = require './row.token'
 
+###*
+Packet for TokenStream (0x04)
+
+@spec 2.2.4.2
+###
 class exports.TokenStreamPacket extends Packet
 
   @type: 0x04

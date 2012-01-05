@@ -3,11 +3,27 @@
 {TdsClient} = require './tds-client'
 {TdsUtils} = require './tds-utils'
 
+###*
+Connection class for connecting to SQL Server
+###
 class exports.Connection extends EventEmitter
 
   constructor: (@_options) ->
     @_autoCommit = true
     @_client = new TdsClient
+      error: (err) =>
+        if @_pendingCallback?
+          @_currentStatement = null
+          cb = @_pendingCallback
+          @_pendingCallback = null
+          cb err
+        else if @_pendingLoginCallback?
+          cb = @_pendingLoginCallback
+          @_pendingLoginCallback = null
+          cb err
+        else if @_currentStatement? then @_currentStatement._error err
+        else if @handler? then @handler.error? err
+        else @emit 'error', err
       message: (message) =>
         # turn errors into actual errors
         if message.error
@@ -16,6 +32,10 @@ class exports.Connection extends EventEmitter
             @_currentStatement = null
             cb = @_pendingCallback
             @_pendingCallback = null
+            cb err
+          else if @_pendingLoginCallback?
+            cb = @_pendingLoginCallback
+            @_pendingLoginCallback = null
             cb err
           else if @_currentStatement? then @_currentStatement._error err
           else if @handler? then @handler.error? err
@@ -102,6 +122,9 @@ class exports.Connection extends EventEmitter
     @_currentStatement = null
     @_client.end()
 
+###*
+Statement class
+###
 Statement = class exports.Statement extends EventEmitter
 
   constructor: (@_connection, @_sql, @_params, @handler) ->
@@ -214,6 +237,9 @@ Statement = class exports.Statement extends EventEmitter
       if @handler? then @handler.done? done
       else @emit 'done', done
 
+###*
+TdsError class
+###
 TdsError = class exports.TdsError extends Error
 
   constructor: (@message, @info) ->

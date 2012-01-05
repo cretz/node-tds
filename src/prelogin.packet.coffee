@@ -1,5 +1,10 @@
 {Packet} = require './packet'
 
+###*
+Packet for PRELOGIN (0x12)
+
+@spec 2.2.6.4
+###
 class exports.PreLoginPacket extends Packet
   
   @type: 0x12

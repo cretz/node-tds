@@ -1,6 +1,11 @@
 {Packet} = require './packet'
 {TdsConstants} = require './tds-constants'
 
+###*
+Packet for LOGIN7 (0x10). This is the packet sent for initial login
+
+@spec 2.2.6.3
+###
 class exports.Login7Packet extends Packet
   
   @type: 0x10
@@ -58,13 +63,13 @@ class exports.Login7Packet extends Packet
 
   toBuffer: (builder, context) ->
     # validate
-    if not @serverName? or @serverName.length is 0 then throw new Error 'serverName not specified'
     if not @userName? or @userName.length is 0 then throw new Error 'userName not specified'
     if @domain? and @domain.length > 0 then throw new Error 'NTLM not yet supported'
     # length
     @hostName ?= require('os').hostname()
     @password ?= ''
     @appName ?= 'node-tds'
+    @serverName ?= ''
     @interfaceLibraryName ?= 'node-tds'
     @language ?= ''
     @database ?= ''

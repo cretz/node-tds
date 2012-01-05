@@ -1,3 +1,7 @@
+
+###*
+Common TDS utility functions
+###
 class exports.TdsUtils
   
   @buildParameterDefinition: (params, shouldAssert) ->

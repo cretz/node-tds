@@ -1,6 +1,13 @@
 {TdsConstants} = require './tds-constants'
 {Token} = require './token'
 
+###*
+Token for DONE (0xFD), DONEINPROC (0xFD), and DONEPROC (0xFE)
+
+@spec 2.2.7.5
+@spec 2.2.7.6
+@spec 2.2.7.7
+###
 class exports.DoneToken extends Token
   
   @type: 0xFD

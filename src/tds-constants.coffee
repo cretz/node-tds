@@ -1,3 +1,7 @@
+
+###*
+Class with static TDS info
+###
 class exports.TdsConstants
   
   ###*

@@ -1,5 +1,10 @@
 {Token} = require './token'
 
+###*
+Token for LOGINACK (0xAD)
+
+@spec 2.2.7.11
+###
 class exports.LoginAckToken extends Token
   
   @type: 0xAD

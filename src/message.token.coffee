@@ -1,6 +1,9 @@
 {TdsConstants} = require './tds-constants'
 {Token} = require './token'
 
+###*
+Base token for error and info message tokens
+###
 class exports.MessageToken extends Token
   
   fromBuffer: (stream, context) ->

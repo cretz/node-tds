@@ -1,3 +1,8 @@
+
+###*
+Builder for buffers. Basically allows building a buffer
+but the buffer isn't created until toBuffer is called.
+###
 class exports.BufferBuilder
   
   @getUcs2StringLength: (string) -> string.length * 2

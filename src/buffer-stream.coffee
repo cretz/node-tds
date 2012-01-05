@@ -1,3 +1,9 @@
+
+###*
+Streaming buffer reader. This allows you to mark the beginning
+of the read, and read individual pieces. If the underlying buffer
+isn't big enough, a StreamIndexOutOfBoundsError is thrown.
+###
 class exports.BufferStream
 
   constructor: ->

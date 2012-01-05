@@ -1,6 +1,11 @@
 {Token} = require './token'
 {TdsConstants} = require './tds-constants'
 
+###*
+Token for COLMETADATA (0x81)
+
+@spec 2.2.7.4
+###
 class exports.ColMetaDataToken extends Token
   
   @type: 0x81

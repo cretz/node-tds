@@ -1,5 +1,10 @@
 {Token} = require './token'
 
+###*
+Token for RETURNSTATUS (0x79)
+
+@spec 2.2.7.15
+###
 class exports.ReturnStatusToken extends Token
   
   @type: 0x79

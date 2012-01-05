@@ -1,6 +1,11 @@
 {TdsConstants} = require './tds-constants'
 {Token} = require './token'
 
+###*
+Token for ENVCHANGE (0xE3)
+
+@spec 2.2.7.8
+###
 class exports.EnvChangeToken extends Token
 
   @type: 0xE3

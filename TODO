@@ -1,7 +1,0 @@
-Things to do:
-
-* NTLM SSO auth with current user using C++ add on inspired by ntlmauth.dll from jTDS
-** would love to use node-ffi here once Windows support is complete
-* SQL bulk load
-* TDS server impl too?
-* Multiple result set test

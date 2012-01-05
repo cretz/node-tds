@@ -1,5 +1,10 @@
 {Packet} = require './packet'
 
+###*
+Packet for SQLBatch (0x01)
+
+@spec 2.2.6.6
+###
 class exports.SqlBatchPacket extends Packet
   
   @type: 0x01

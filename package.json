@@ -1,0 +1,23 @@
+{
+  "name" : "tds",
+  "version" : "v0.1.0",
+  "description" : "TDS client for connecting to Microsoft SQL Server",
+  "keywords" : ["tds", "sql", "mssql", "database", "node-tds"],
+  "homepage" : "http://cretz.github.com/node-tds",
+  "author" : "Chad Retz <chad.retz@gmail.com>",
+  "main" : "./lib/tds",
+  "repository" : { 
+    "type" : "git",
+    "url" : "http://github.com/cretz/node-tds.git"
+  },
+  "devDependencies" : {
+    "mocha" : ">=0.8.0"
+  },
+  "engines" : {
+    "node" : ">=0.6.0"
+  },
+  "licenses" : [{
+    "type" : "MIT",
+    "url" : "http://github.com/cretz/node-tds/raw/master/LICENSE"
+  }]
+}

@@ -1,3 +1,7 @@
+
+###*
+Base class for all TDS packets
+###
 class exports.Packet
   
   @retrieveHeader: (stream, context) ->

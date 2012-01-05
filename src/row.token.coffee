@@ -1,6 +1,11 @@
 {TdsUtils} = require './tds-utils'
 {Token} = require './token'
 
+###*
+Token for ROW (0xD1)
+
+@spec 2.2.7.17
+###
 class exports.RowToken extends Token
   
   @type: 0xD1
@@ -31,7 +36,8 @@ class exports.RowToken extends Token
   isNull: (column) ->
     col = @metadata.getColumn column
     if not col? then throw new Error 'Column ' + column + ' not found'
-    @values[col.index].length
+    if col.type.emptyPossible then @values[col.index].length is -1
+    else @values[col.index] is 0
 
   getValueLength: (column) ->
     col = @metadata.getColumn column
