@@ -1,4 +1,3 @@
-
 ###*
 Class with static TDS info
 ###
@@ -72,7 +71,7 @@ class exports.TdsConstants
       emptyPossible: true
     0x24:
       name: 'GUIDTYPE'
-      sqlType: 'UniqueIndentifier'
+      sqlType: 'UniqueIdentifier'
     0x25:
       name: 'VARBINARYTYPE'
       sqlType: 'VarBinary'
