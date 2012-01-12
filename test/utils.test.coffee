@@ -1,6 +1,6 @@
 assert = require 'assert'
 
-{Connection} = require '../lib/node-tds'
+{Connection} = require '../lib/tds'
 {TestConstants} = require './constants.test'
 
 class exports.TestUtils
