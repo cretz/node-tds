@@ -118,7 +118,7 @@ class exports.TdsClient
     @_stream.append data
     # do we have a token stream already?
     if @_tokenStream?
-      @_handleTokenStream()
+      @_handleToken()
     else
       @_handlePacket()
   
