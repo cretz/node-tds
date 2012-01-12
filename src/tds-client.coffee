@@ -221,10 +221,11 @@ class exports.TdsClient
     @state = TdsConstants.statesByName['INITIAL']
     @_handler?.end?()
   
-  _socketClose: =>
+  _socketClose: (had_error) =>
     if @logDebug then console.log 'Socket closed' 
     @_socket = null
     @state = TdsConstants.statesByName['INITIAL']
+    @_handler?.close? had_error
     
   _sendPacket: (packet) ->
     if @logDebug

@@ -62,6 +62,12 @@ class exports.Connection extends EventEmitter
           @_pendingCallback = null
           cb()
         else if @_currentStatement? then @_currentStatement._done done
+      end: =>
+        if @handler? then @handler.end?()
+        else @emit 'end'
+      close: (had_error) =>
+        if @handler? then @handler.close? had_error
+        else @emit 'close', had_error
     @_client.logError = @_options?.logError
     @_client.logDebug = @_options?.logDebug
   
