@@ -35,7 +35,6 @@ class exports.BufferStream
     
   assertBytesAvailable: (amountNeeded) ->
     if amountNeeded + @_offset > @_buffer.length
-      console.log 'Need %d, length %d', amountNeeded + @_offset, @_buffer.length
       throw new BufferStream.StreamIndexOutOfBoundsError 'Index out of bounds'
       
   currentOffset: -> @_offset - @_offsetStart
