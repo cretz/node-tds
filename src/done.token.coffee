@@ -40,5 +40,3 @@ class exports.DoneToken extends Token
       @rowCount = [stream.readUInt32LE(), stream.readUInt32LE()]
     else
       @rowCount = stream.readInt32LE()
-
-  

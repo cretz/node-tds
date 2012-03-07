@@ -1,4 +1,6 @@
 {Socket} = require 'net'
+fs = require 'fs'
+util = require 'util'
 
 {AttentionPacket} = require './attention.packet'
 {BufferBuilder} = require './buffer-builder'
@@ -22,12 +24,18 @@ class exports.TdsClient
     if not @_handler? then throw new Error 'Handler required'
     @logDebug = @logError = false
     @state = TdsConstants.statesByName['INITIAL']
+
+  debug: (contents) ->
+    if @logDebug
+      if not @_debugFd?
+        @_debugFd = fs.openSync 'debug.out', 'w'
+      fs.writeSync @_debugFd, util.format.apply(null, arguments) + '\n'
     
   connect: (config) ->
     if @state isnt TdsConstants.statesByName['INITIAL']
       throw new Error 'Client must be in INITIAL state before connecting'
     @state = TdsConstants.statesByName['CONNECTING']
-    if @logDebug then console.log 'Connecting to SQL Server with config %j', config
+    @debug 'Connecting to SQL Server with config %j', config
     try
       @_preLoginConfig = config
       # create socket
@@ -50,7 +58,7 @@ class exports.TdsClient
     if @state isnt TdsConstants.statesByName['CONNECTED']
       throw new Error 'Client must be in CONNECTED state before logging in'
     @state = TdsConstants.statesByName['LOGGING IN']
-    if @logDebug then console.log 'Logging in with config %j', config 
+    @debug 'Logging in with config %j', config 
     try
       # create packet
       login = new Login7Packet
@@ -67,7 +75,7 @@ class exports.TdsClient
   sqlBatch: (sqlText) ->
     if @state isnt TdsConstants.statesByName['LOGGED IN']
       throw new Error 'Client must be in LOGGED IN state before executing sql'
-    if @logDebug then console.log 'Executing SQL Batch: %s', sqlText
+    @debug 'Executing SQL Batch: %s', sqlText
     try
       # create packet
       sqlBatch = new SqlBatchPacket
@@ -81,7 +89,7 @@ class exports.TdsClient
   cancel: ->
     if @state isnt TdsConstants.statesByName['LOGGED IN']
       throw new Error 'Client must be in LOGGED IN state before cancelling'
-    if @logDebug then console.log 'Cancelling'
+    @debug 'Cancelling'
     try
       @cancelling = true
       @_sendPacket new AttentionPacket
@@ -91,7 +99,7 @@ class exports.TdsClient
       @_handler?.error? err    
       
   _socketConnect: =>
-    if @logDebug then console.log 'Connection established, pre-login commencing'
+    @debug 'Connection established, pre-login commencing'
     try
       # create new stream
       @_stream = new BufferStream
@@ -113,8 +121,7 @@ class exports.TdsClient
     @end()
     
   _socketData: (data) =>
-    if @logDebug then console.log 'Received %d bytes at state', data.length, 
-      @state, data
+    @debug 'Received %d bytes at state', data.length, @state, data
     @_stream.append data
     # do we have a token stream already?
     if @_tokenStream?
@@ -137,22 +144,59 @@ class exports.TdsClient
     receivedLoginAck = false
     loop
       @_stream.beginTransaction()
+      currentOffset = 0
       try
         currentOffset = @_stream.currentOffset()
-        token = @_tokenStream.nextToken @_stream, @
+        token = null
+        if @_tokenStreamRemainingLength is 1
+          # just ignore the type byte
+          @_stream.skip 2
+        else 
+          token = @_tokenStream.nextToken @_stream, @
+        # if our remaining length could be less than zero, we commit and hold on to the pending amount
+        if @_tokenStreamRemainingLength - (@_stream.currentOffset() - currentOffset) < 0
+          @debug 'From %d to %d left negative remaining', currentOffset, @_stream.currentOffset(),
+            @_tokenStreamRemainingLength - (@_stream.currentOffset() - currentOffset)
+          @debug 'Buffer at %d', currentOffset, @_stream.getBuffer().slice(currentOffset)
+          # rollback
+          @_stream.rollbackTransaction()
+          # grab only the amount we could have gotten and store
+          @_pendingTokenStreamBuffer = @_stream.readBuffer @_tokenStreamRemainingLength
+          @debug 'Got pending buffer: ', @_pendingTokenStreamBuffer
+          # commit that read
+          @_stream.commitTransaction()
+          @debug 'What is left: ', @_stream.getBuffer()
+          # now try to get a packet again
+          @_handlePacket()
+          return
+        else 
+          @_pendingTokenStreamBuffer = null
         @_tokenStreamRemainingLength -= @_stream.currentOffset() - currentOffset
-        if @logDebug then console.log 'From %d to %d offset, remaining: ',
+        @debug 'From %d to %d offset, remaining: ',
           currentOffset, @_stream.currentOffset(), @_tokenStreamRemainingLength
         @_stream.commitTransaction()
       catch err
         if err instanceof StreamIndexOutOfBoundsError
-          if @logDebug then console.log 'Stream incomplete, rolling back' 
+          @debug 'Stream incomplete, rolling back' 
           # rollback
           @_stream.rollbackTransaction()
           return
         else
-          if @logError then console.error 'Error reading stream: ', err.stack 
-          throw err
+          # possible someone read too far and needs to work with a packet again
+          if @_tokenStreamRemainingLength - (@_stream.currentOffset() - currentOffset) < 0
+            @debug 'Error happened when reading outside of range; ignoring...'
+            # rollback
+            @_stream.rollbackTransaction()
+            # grab only the amount we could have gotten and store
+            @_pendingTokenStreamBuffer = @_stream.readBuffer @_tokenStreamRemainingLength
+            # commit that read
+            @_stream.commitTransaction()
+            # now try to get a packet again
+            @_handlePacket()
+            return
+          else
+            if @logError then console.error 'Error reading stream: ', err.stack 
+            throw err
       if @_tokenStreamRemainingLength is 0
         @_tokenStream = @_tokenStreamRemainingLength = null
       if not @_cancelling or token.type is DoneToken.type
@@ -160,11 +204,11 @@ class exports.TdsClient
         # call handler if present
         @_handler?[token.handlerFunction]? token
         # handle my way
-        if @logDebug then console.log 'Checking token type: ', token.type
+        @debug 'Checking token type: ', token.type
         switch token.type
           when LoginAckToken.type
             if @state isnt TdsConstants.statesByName['LOGGING IN']
-              throw new Error 'Received login ack when not loggin in'
+              throw new Error 'Received login ack when not logging in'
             receivedLoginAck = true
           when ColMetaDataToken.type
             @colmetadata = token
@@ -174,6 +218,10 @@ class exports.TdsClient
     if receivedLoginAck
       @state = TdsConstants.statesByName['LOGGED IN']
       @_handler?.login?()
+    # more packet to be had?
+    if @_stream.getBuffer().length > 0
+      @debug 'More packet to be had, continuing...'
+      @_handlePacket()
 
   _handlePacket: ->
     packet = null
@@ -185,18 +233,24 @@ class exports.TdsClient
       packet = @_getPacketFromType header.type
       # we stream token streams
       if packet instanceof TokenStreamPacket
-        if @logDebug then console.log 'Found token stream packet'
+        @debug 'Found token stream packet'
         @_tokenStream = packet
         @_tokenStreamRemainingLength = header.length - 8
       else
-        if @logDebug then console.log 'Found non token stream packet'
+        @debug 'Found non token stream packet'
         # parse
         packet.fromBuffer @_stream, @
       # commit
       @_stream.commitTransaction()
+      # did we have some pending?
+      if @_pendingTokenStreamBuffer?
+        @debug 'Appending previously held buffer: ', @_pendingTokenStreamBuffer
+        @_stream.prepend @_pendingTokenStreamBuffer
+        @_tokenStreamRemainingLength += @_pendingTokenStreamBuffer.length
+        @_pendingTokenStreamBuffer = null
     catch err
       if err instanceof StreamIndexOutOfBoundsError
-        if @logDebug then console.log 'Stream incomplete, rolling back' 
+        @debug 'Stream incomplete, rolling back' 
         # rollback
         @_stream.rollbackTransaction()
         return
@@ -206,7 +260,7 @@ class exports.TdsClient
     if @_tokenStream?
       @_handleToken()
     else
-      if @logDebug then console.log 'Buffer remaining: ', @_stream.getBuffer()
+      @debug 'Buffer remaining: ', @_stream.getBuffer()
       # handle packet
       if packet instanceof PreLoginPacket
         @state = TdsConstants.statesByName['CONNECTED']
@@ -216,28 +270,27 @@ class exports.TdsClient
         throw new Error 'Unrecognized type: ' + packet.type
     
   _socketEnd: =>
-    if @logDebug then console.log 'Socket ended remotely' 
+    @debug 'Socket ended remotely' 
     @_socket = null
     @state = TdsConstants.statesByName['INITIAL']
     @_handler?.end?()
   
   _socketClose: (had_error) =>
-    if @logDebug then console.log 'Socket closed' 
+    @debug 'Socket closed' 
     @_socket = null
     @state = TdsConstants.statesByName['INITIAL']
     @_handler?.close? had_error
     
   _sendPacket: (packet) ->
-    if @logDebug
-      console.log 'Sending packet: %s at state', packet.name, @state
+    @debug 'Sending packet: %s at state', packet.name, @state
     builder = new BufferBuilder()
     builder = packet.toBuffer new BufferBuilder(), @
     buff = builder.toBuffer()
-    if @logDebug then console.log 'Packet size: %d', buff.length
+    @debug 'Packet size: %d', buff.length
     @_socket.write buff
     
   end: ->
-    if @logDebug then console.log 'Ending socket' 
+    @debug 'Ending socket' 
     try
       @_socket.end()
     @_socket = null

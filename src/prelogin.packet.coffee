@@ -24,24 +24,24 @@ class exports.PreLoginPacket extends Packet
         length: stream.readByte()
       if context.logDebug
         val = pendingValues[pendingValues.length - 1]
-        console.log 'Added pending value type: %d, offset: %d, length: %d',
+        context.debug 'Added pending value type: %d, offset: %d, length: %d',
           val.type, val.offset, val.length
     for pendingValue in pendingValues
       switch pendingValue.type
         when 0
           @version = stream.readBytes 6
-          if context.logDebug then console.log 'Version: ', @version
+          context.debug 'Version: ', @version
         when 1
           @encryption = stream.readByte()
-          if context.logDebug then console.log 'Encryption: ', @encryption
+          context.debug 'Encryption: ', @encryption
         when 2
-          if context.logDebug then console.log 'Reading instance name of length: %d', pendingValue.length
+          context.debug 'Reading instance name of length: %d', pendingValue.length
           @instanceName = stream.readAsciiString pendingValue.length - 1
           stream.skip 1
-          if context.logDebug then console.log 'Instance name: ', @instanceName
+          context.debug 'Instance name: ', @instanceName
         when 3
           # ignore this coming from the server
-          if context.logDebug then console.log 'Ignoring thread ID: '
+          context.debug 'Ignoring thread ID: '
         else stream.skip pendingValue.length
         
   toBuffer: (builder, context) ->

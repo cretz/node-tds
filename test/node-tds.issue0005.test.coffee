@@ -12,26 +12,27 @@ describe 'Statement', ->
       conn?.end()
 
     it 'should return multiple result sets properly', (alldone) ->
-      alldone()
-      # FIXME - overflowing packet size screws things up
-      # rowCount = 0
-      # doneCount = 0
-      # handler =
-      #   row: ->
-      #     rowCount++
-      #     console.log 'GOT ROW!: ', rowCount
-      #   done: ->
-      #     if rowCount >= 100 then alldone()
-      # conn.connect =>
-      #   # ask for 300 results
-      #   sql = '''
-      #         DECLARE @i INT
-      #         SET @i = 0
-      #         WHILE (@i < 100)
-      #         BEGIN
-      #         SELECT @i = @i + 1
-      #         SELECT 'Test'
-      #         END
-      #         '''
-      #   stmt = conn.createStatement sql, null, handler
-      #   stmt.execute()
+      # What we're doing here is returning a bunch of individual row results
+      #   off of a range of records...
+      rowCount = 0
+      doneCount = 0
+      handler =
+        row: ->
+          rowCount++
+          conn._client.debug 'GOT ROW!: ', rowCount
+        done: ->
+          if rowCount >= 30000 
+            alldone()
+      conn.connect =>
+        # ask for 30000 results
+        sql = """
+              DECLARE @i INT
+              SET @i = 0
+              WHILE (@i < 30000)
+              BEGIN
+              SELECT @i = @i + 1
+              SELECT 'Test'
+              END
+              """
+        stmt = conn.createStatement sql, null, handler
+        stmt.execute()

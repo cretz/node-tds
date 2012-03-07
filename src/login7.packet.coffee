@@ -52,11 +52,9 @@ class exports.Login7Packet extends Packet
     stream.skip 4
     # set strings
     for key, value of pendingStrings
-      if context.logDebug 
-        console.log 'Reading %s at %d of length %d', key, value.pos, value.length
+      context.debug 'Reading %s at %d of length %d', key, value.pos, value.length
       str = stream.readUcs2String value.length
-      if context.logDebug
-        console.log 'Read %s: %s', key, str
+      context.debug 'Read %s: %s', key, str
       if key.charAt 0 isnt '.'
         @[key] = str
 

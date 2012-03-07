@@ -12,7 +12,7 @@ class exports.Packet
       processId: stream.readUInt16BE()
       packetId: stream.readByte()
       window: stream.readByte()
-    if context.logDebug then console.log 'Retrieved header: ', ret
+    context.debug 'Retrieved header: ', ret
     # assert length
     # stream.assertBytesAvailable ret.length - 8
     ret
@@ -23,7 +23,7 @@ class exports.Packet
   
   insertPacketHeader: (builder, context, endOfMessage = true) ->
     # packet type
-    if context.logDebug then console.log 'Inserting header for type: ', @type
+    context.debug 'Inserting header for type: ', @type
     builder.insertByte @type, 0
     # status
     builder.insertByte (if endOfMessage then 1 else 0), 1

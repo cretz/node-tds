@@ -14,7 +14,7 @@ class exports.MessageToken extends Token
     @state = stream.readByte()
     @severity = stream.readByte()
     @text = stream.readUcs2String stream.readUInt16LE()
-    if context.logDebug then console.log 'Read: %s', @text
+    context.debug 'Read: %s', @text
     @serverName = stream.readUcs2String stream.readByte()
     @procName = stream.readUcs2String stream.readByte()
     if context.tdsVersion >= TdsConstants.versionsByVersion['7.2']

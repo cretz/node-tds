@@ -27,12 +27,11 @@ class exports.ColMetaDataToken extends Token
         userType: stream.readUInt16LE()
         # flags
         flags: stream.readUInt16LE()
-        # typeInfo
-        type: stream.readByte()
       # more typeInfo work
-      column.type = TdsConstants.dataTypesByType[column.type]
+      typ = stream.readByte()
+      column.type = TdsConstants.dataTypesByType[typ]
       if not column.type?
-        throw new Error 'Unrecognized type 0x' + column.type.toString 16
+        throw new Error 'Unrecognized column type 0x' + typ.toString 16
       column.isNullable = column.flags & 0x01 isnt 0
       column.isCaseSensitive = column.flags & 0x02 isnt 0
       column.isIdentity = column.flags & 0x10 isnt 0

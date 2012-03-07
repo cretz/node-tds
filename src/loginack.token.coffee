@@ -21,7 +21,7 @@ class exports.LoginAckToken extends Token
     @interface = stream.readByte()
     @tdsVersion = stream.readUInt32LE()
     len = stream.readByte()
-    if context.logDebug then console.log 'Reading progName of length', len
+    context.debug 'Reading progName of length', len
     @progName = stream.readUcs2String len
     #stream.skip 1
     @majorVer = stream.readByte()

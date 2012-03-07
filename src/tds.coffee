@@ -76,7 +76,7 @@ class exports.Connection extends EventEmitter
 
   createStatement: (sql, params, handler) =>
     if @_currentStatement then throw new Error 'Statement currently running'
-    if @_options.logDebug then console.log 'Creating statement: %s with params: ', sql, params
+    @_client.debug 'Creating statement: %s with params: ', sql, params
     new Statement @, sql, params, handler
 
   # TODO - build RPC call  

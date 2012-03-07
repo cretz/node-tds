@@ -23,7 +23,7 @@ class exports.TokenStreamPacket extends Packet
   	@type = 0x04
   	@name = 'TokenStream'
 
-  _getTokenFromType: (type) ->
+  _getTokenFromType: (type, context) ->
     switch type
       when ColMetaDataToken.type then new ColMetaDataToken
       when DoneToken.type, DoneToken.type2, DoneToken.type3 then new DoneToken
@@ -34,12 +34,14 @@ class exports.TokenStreamPacket extends Packet
       when OrderByToken.type then new OrderByToken
       when ReturnStatusToken.type then new ReturnStatusToken
       when RowToken.type then new RowToken
-      else throw new Error 'Unrecognized type: ' + type 
+      else 
+        context.debug 'Unrecognized type: ' + type 
+        throw new Error 'Unrecognized type: ' + type 
 
   nextToken: (stream, context) ->
     type = stream.readByte()
-    if context.logDebug then console.log 'Retrieved token type: ', type
-    token = @_getTokenFromType type
+    context.debug 'Retrieved token type: ', type
+    token = @_getTokenFromType type, context
     token.fromBuffer stream, context
-    if context.logDebug then console.log 'Retrieved token: ', token
+    context.debug 'Retrieved token: ', token
     token

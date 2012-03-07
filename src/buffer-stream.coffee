@@ -17,6 +17,15 @@ class exports.BufferStream
       @_buffer.copy newBuffer
       buffer.copy newBuffer, @_buffer.length
       @_buffer = newBuffer
+
+  prepend: (buffer) ->
+    if not @_buffer?
+      @_buffer = buffer
+    else
+      newBuffer = new Buffer buffer.length + @_buffer.length
+      buffer.copy newBuffer
+      @_buffer.copy newBuffer, buffer.length
+      @_buffer = newBuffer
       
   getBuffer: ->
     @_buffer
