@@ -17,6 +17,7 @@ class exports.RowToken extends Token
     @handlerFunction = 'row'
   
   fromBuffer: (stream, context) ->
+    @_context = context
     @metadata = context.colmetadata
     @values = new Array(@metadata.columns.length)
     for column, index in @metadata.columns
@@ -81,7 +82,34 @@ class exports.RowToken extends Token
       when 'Float'
         if val.length is 0 then null
         else val.buffer.readDoubleLE 0
-      # TODO when 'Numeric', 'Decimal'
+      when 'Numeric', 'Decimal'
+        if val.length is 0 then null
+        else
+          sign = if val.buffer.readUInt8(0) is 1 then 1 else -1
+          nums = []
+          switch val.length - 1
+            when 4 then nums = [val.buffer.readUInt32LE(1)]
+            when 8
+              nums = [val.buffer.readUInt32LE(1), val.buffer.readUInt32LE(5)]
+            when 12
+              nums = [
+                val.buffer.readUInt32LE(1), 
+                val.buffer.readUInt32LE(5),
+                val.buffer.readUInt32LE(9)
+              ]
+            when 16
+              nums = [
+                val.buffer.readUInt32LE(1),
+                val.buffer.readUInt32LE(5),
+                val.buffer.readUInt32LE(9),
+                val.buffer.readUInt32LE(13)
+              ]
+            else throw new Error 'Unknown numeric size: ' + (val.length - 1)
+          retVal = 0
+          for num, i in nums
+            retVal += Math.pow(0x100000000, i) * num
+          retVal *= sign
+          retVal /= Math.pow 10, col.scale
       when 'UniqueIdentifier'
         if val.length is 0 then null
         else val.buffer

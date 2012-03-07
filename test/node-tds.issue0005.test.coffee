@@ -21,14 +21,14 @@ describe 'Statement', ->
           rowCount++
           conn._client.debug 'GOT ROW!: ', rowCount
         done: ->
-          if rowCount >= 30000 
+          if rowCount >= 1000 
             alldone()
       conn.connect =>
         # ask for 30000 results
         sql = """
               DECLARE @i INT
               SET @i = 0
-              WHILE (@i < 30000)
+              WHILE (@i < 1000)
               BEGIN
               SELECT @i = @i + 1
               SELECT 'Test'

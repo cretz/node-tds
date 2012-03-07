@@ -10,16 +10,12 @@ assert = require 'assert'
 
 assertPacket = (packetClass, expected, ignored = {}, expectedStatus = 1) ->
   expected ?= new packetClass()
-  bldr = expected.toBuffer new BufferBuilder(),
-    logDebug: TestConstants.logDebug
-    logError: TestConstants.logError
+  bldr = expected.toBuffer new BufferBuilder(), debug: -> 'noop'
   buff = bldr.toBuffer()
   stream = new BufferStream()
   stream.append buff
   stream.beginTransaction()
-  header = Packet.retrieveHeader stream, 
-    logDebug: TestConstants.logDebug
-    logError: TestConstants.logError
+  header = Packet.retrieveHeader stream, debug: -> 'noop'
   assert.equal header.type, expected.type, 
     'header.type expected ' + expected.type + ' got ' + header.type
   assert.equal header.status, expectedStatus, 
@@ -33,9 +29,7 @@ assertPacket = (packetClass, expected, ignored = {}, expectedStatus = 1) ->
   assert.equal header.window, 0,
     'header.window expected 0 got ' + header.window
   actual = new packetClass()
-  actual.fromBuffer stream, 
-    logDebug: TestConstants.logDebug
-    logError: TestConstants.logError
+  actual.fromBuffer stream, debug: -> 'noop'
   for key, value of expected
     if not ignored[key]
       # arrays are different

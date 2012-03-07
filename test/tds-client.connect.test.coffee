@@ -42,4 +42,4 @@ describe 'TdsClient', ->
       client.logDebug = TestConstants.logDebug
       client.connect
         host: TestConstants.host
-        port: TestConstants.port + 1
+        port: TestConstants.port + 2

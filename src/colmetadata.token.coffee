@@ -56,8 +56,8 @@ class exports.ColMetaDataToken extends Token
         if column.type.hasCollation
           column.collation = stream.readBytes 5
         else if column.type.hasScaleAndPrecision
-          column.scale = stream.readByte()
           column.precision = stream.readByte()
+          column.scale = stream.readByte()
       else
         column.length = column.type.length
       # null?
