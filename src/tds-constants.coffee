@@ -62,6 +62,7 @@ class exports.TdsConstants
       lengthType: 'int32LE'
       hasTableName: true
       emptyPossible: true
+      hasTextPointer: true
     0x23:
       name: 'TEXTTYPE'
       sqlType: 'Text'
@@ -69,6 +70,7 @@ class exports.TdsConstants
       hasCollation: true
       hasTableName: true
       emptyPossible: true
+      hasTextPointer: true
     0x24:
       name: 'GUIDTYPE'
       sqlType: 'UniqueIdentifier'
@@ -176,6 +178,7 @@ class exports.TdsConstants
       hasCollation: true
       hasTableName: true
       emptyPossible: true
+      hasTextPointer: true
     0x68:
       name: 'BITNTYPE'
       lengthSubstitutes:

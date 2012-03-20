@@ -1,6 +1,8 @@
 {TdsUtils} = require './tds-utils'
 {Token} = require './token'
 
+_PLP_NULL = new Buffer [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
+
 ###*
 Token for ROW (0xD1)
 
@@ -22,12 +24,43 @@ class exports.RowToken extends Token
     @values = new Array(@metadata.columns.length)
     for column, index in @metadata.columns
       val = {}
-      switch column.lengthType
-        when 'int32LE' then val.length = stream.readInt32LE()
-        when 'uint16LE' then val.length = stream.readUInt16LE()
-        when 'uint8' then val.length = stream.readByte()
-        else val.length = column.length
-      if val.length is 0xFFFF then val.length = -1
+      # ignore pointer
+      if column.type.hasTextPointer
+        len = stream.readByte()
+        if len isnt 0 then stream.skip len + 8
+        else val.length = -1
+        context.debug 'Val: ', val
+      if column.length isnt 0xFFFF and val.length isnt -1
+        switch column.lengthType
+          when 'int32LE' then val.length = stream.readInt32LE()
+          when 'uint16LE' then val.length = stream.readUInt16LE()
+          when 'uint8' then val.length = stream.readByte()
+          else val.length = column.length
+      else if val.length isnt -1
+        # max length stuff
+        switch column.type.sqlType
+          when 'Char', 'VarChar', 'NChar', 'NVarChar', 'Binary', 'VarBinary'
+            # grab the entire buffer
+            top = stream.readBuffer 8
+            if top.equals _PLP_NULL then val.length = -1
+            else
+              # skip expected length validation for now
+              chunkLength = stream.readUInt32LE()
+              val.length = 0
+              chunks = []
+              while chunkLength isnt 0
+                val.length += chunkLength
+                chunks.push stream.readBuffer(chunkLength)
+                chunkLength = stream.readUInt32LE()
+              val.buffer = new Buffer val.length
+              pos = 0
+              for chunk in chunks
+                chunk.copy val.buffer, pos, 0
+                pos += chunk.length
+              # the length is half if it's unicode
+              if column.type.sqlType is 'NChar' or column.type.sqlType is 'NVarChar'
+                val.length /= 2
+          else val.length = column.length
       if val.length is 0 and column.type.emptyPossible
         val.buffer = new Buffer 0
       else if val.length > 0
@@ -65,13 +98,13 @@ class exports.RowToken extends Token
         if val.length is 0 then null
         else TdsUtils.bigIntBufferToString val.buffer
       # TODO RowVersion/TimeStamp
-      when 'Char', 'VarChar'
+      when 'Char', 'VarChar', 'Text'
         if val.length is -1 then null
         else val.buffer.toString 'ascii', 0, val.length
-      when 'NChar', 'NVarChar'
+      when 'NChar', 'NVarChar', 'NText'
         if val.length is -1 then null
         else val.buffer.toString 'ucs2', 0, val.length * 2
-      when 'Binary', 'VarBinary'
+      when 'Binary', 'VarBinary', 'Image'
         if col.length is -1 then null
         else val.buffer
       # TODO when 'SmallMoney'
@@ -154,3 +187,4 @@ class exports.RowToken extends Token
 
   _readDate: (buffer) ->
     throw new Error 'Not implemented'
+    
